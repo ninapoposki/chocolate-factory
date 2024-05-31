@@ -36,8 +36,10 @@ public class ProductService {
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Collection<Product> getProducts() {
-		ProductDAO dao=(ProductDAO) ctx.getAttribute("productDAO");
+		ProductDAO dao = (ProductDAO) ctx.getAttribute("productDAO");
 		return dao.findAll();
 	}
+	
+	
 	
 }
