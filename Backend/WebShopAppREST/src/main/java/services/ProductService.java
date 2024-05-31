@@ -13,10 +13,21 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import beans.Product;
+import dao.ProductDAO;
 
 
 @Path("/products")
 public class ProductService {
+	@Context
+	ServletContext ctx;
+	
+	@PostConstruct
+    public void init() {
+        if(ctx.getAttribute("productDAO")==null) {
+            String ContextPath=ctx.getRealPath("");
+            ctx.setAttribute("productDAO", new ProductDAO(ContextPath));
+        }
+    }
 	
 	public ProductService() {
 	}
@@ -25,7 +36,10 @@ public class ProductService {
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Collection<Product> getProducts() {
-		return null;
+		ProductDAO dao = (ProductDAO) ctx.getAttribute("productDAO");
+		return dao.findAll();
 	}
+	
+	
 	
 }
