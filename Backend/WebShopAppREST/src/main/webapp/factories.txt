@@ -1,0 +1,3 @@
+1;Pionir;8;true;BICE SLIKA;8.9;1
+2;Heineken;6;false;bice slika;4.5;2
+3;Stark;7;true;bice slika;9.6;3
