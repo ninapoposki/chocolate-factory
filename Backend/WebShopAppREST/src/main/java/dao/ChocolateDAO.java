@@ -85,6 +85,8 @@ public class ChocolateDAO {
             out.flush();
             out.close();
             System.out.println("Chocolate saved to file successfully.");
+            System.out.println("Kontekstna putanja: " + contextPath);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -117,6 +119,8 @@ public class ChocolateDAO {
 				chocolate.setNumberOfChocolates(Integer.parseInt(data[9]));
 
 				chocolates.put(chocolate.getId(), chocolate);
+		        System.out.println("Kontekstna putanja: " + contextPath);
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

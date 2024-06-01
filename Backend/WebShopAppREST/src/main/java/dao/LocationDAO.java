@@ -57,44 +57,42 @@ public class LocationDAO {
 	}
 
 	public void loadLocations(String contextPath) {
-		BufferedReader in = null;
-		try {
-			File file = new File(contextPath + "/locations.txt");
-			System.out.println(file.getCanonicalPath());
-			in = new BufferedReader(new FileReader(file));
-			String line, id = "", width = "", height = "",street="",streetNumber="",city="",postalCode="";
-			StringTokenizer st;
-			while ((line = in.readLine()) != null) {
-				line = line.trim();
-				if (line.equals("") || line.indexOf('#') == 0)
-					continue;
-				st = new StringTokenizer(line, ";");
-				while (st.hasMoreTokens()) {
-					id = st.nextToken().trim();
-					width = st.nextToken().trim();
-					height = st.nextToken().trim();
-					street = st.nextToken().trim();
-					streetNumber = st.nextToken().trim();
-					city = st.nextToken().trim();
-					postalCode = st.nextToken().trim();
-					
-				}
-				 double parsedWidth = Double.parseDouble(width);
-				 double parsedHeight = Double.parseDouble(height);
-				locations.put(id, new Location(id, parsedWidth,parsedHeight,street,streetNumber,city,postalCode));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if ( in != null ) {
-				try {
-					in.close();
-				}
-				catch (Exception e) { }
-			}
-		}
-		
-	}
+        BufferedReader in = null;
+        try {
+            File file = new File(contextPath + "/locations.csv");  // Promenjeno iz .txt u .csv, ako su podaci u CSV formatu
+            System.out.println(file.getCanonicalPath());
+            in = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = in.readLine()) != null) {
+                line = line.trim();
+                if (line.equals("") || line.charAt(0) == '#')
+                    continue;  // Preskoči prazne linije i komentare
+
+                String[] data = line.split(",");
+                if (data.length < 7) continue;  // Preskoči redove koji nemaju svih 7 potrebnih podataka
+
+                String id = data[0].trim();
+                double width = Double.parseDouble(data[1].trim());
+                double height = Double.parseDouble(data[2].trim());
+                String street = data[3].trim();
+                String streetNumber = data[4].trim();
+                String city = data[5].trim();
+                String postalCode = data[6].trim();
+
+                locations.put(id, new Location(id, width, height, street, streetNumber, city, postalCode));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 	public Location findLocation(String id) {
 		return locations.containsKey(id) ? locations.get(id) : null;
 	}
