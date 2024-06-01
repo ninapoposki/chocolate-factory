@@ -1,3 +1,0 @@
-1;19.66556;46.10028;Sencanski put;83;Subotica;24000
-2;20.4612;44.8125;Omladinskih brigada;90b;Beograd;11070
-3;20.4612;44.8125;Bulvar Peka Dapcevica;29;Beograd;11000
