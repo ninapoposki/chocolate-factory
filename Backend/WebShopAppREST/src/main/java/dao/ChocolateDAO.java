@@ -80,11 +80,12 @@ public class ChocolateDAO {
                     chocolate.getPrice() + "," + chocolate.getVariety() + "," +
                     chocolate.getFactoryId() + "," + chocolate.getType() + "," +
                     chocolate.getWeight() + "," + chocolate.getDescription() + "," +
-                    chocolate.getImageUri() + "," + chocolate.getNumberOfChocolates() + "\n");
+                    chocolate.getImageUri() + "," + chocolate.getNumberOfChocolates() + ","+ chocolate.getIsOnStock()+ "\n");
 
             out.flush();
             out.close();
             System.out.println("Chocolate saved to file successfully.");
+            System.out.println(contextPath);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -115,6 +116,7 @@ public class ChocolateDAO {
 				chocolate.setDescription(data[7]);
 				chocolate.setImageUri(data[8]);
 				chocolate.setNumberOfChocolates(Integer.parseInt(data[9]));
+				chocolate.setIsOnStock(Boolean.parseBoolean(data[10]));
 
 				chocolates.put(chocolate.getId(), chocolate);
 			}

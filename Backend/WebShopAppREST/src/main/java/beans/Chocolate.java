@@ -37,7 +37,7 @@ public class Chocolate{
 
 	
 	public Chocolate(String id, String chocolateName, double price, String variety, int i, String type,
-			double weight, String description, String imageUri, int numberOfChocolates) {
+			double weight, String description, String imageUri, int numberOfChocolates, boolean isOnStock) {
 		super();
 		this.id = id;
 		this.chocolateName = chocolateName;
@@ -144,7 +144,7 @@ public class Chocolate{
 		this.factoryId = factoryId;
 	}
 
-	public boolean GetIsOnStock() {
+	public boolean getIsOnStock() {
 		return isOnStock;
 	}
 
