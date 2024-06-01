@@ -33,14 +33,15 @@
       <button type="submit">Register</button>
     </form>
   </div>
-
+  <button @click = "addChocolate()"></button>
 </template>
 
 <script setup>
 import axios from 'axios';
 import { onMounted, ref } from 'vue';
+import {UseRouter} from 'vue-router'
 const users= ref([]);
-
+const router = UseRouter();
 const registerUser = ref({username: "", password:"", firstName:"", lastName:"", gender:"", dateOfBirth:null});
 
 defineProps({
@@ -61,7 +62,9 @@ function loadProducts() {
 		})
     .catch(error => console.log(error));
 }
-
+function addChocolate(){
+  router.push('/add');
+}
 
 function TryToregisterUser(event){
   axios.post('http://localhost:8080/WebShopAppREST/rest/users/register', registerUser.value)

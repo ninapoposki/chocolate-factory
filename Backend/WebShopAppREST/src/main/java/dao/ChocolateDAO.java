@@ -1,23 +1,28 @@
 package dao;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.StringTokenizer;
 
 import beans.Chocolate;
 
 public class ChocolateDAO {
 	
 	private HashMap<String, Chocolate> chocolates = new HashMap<String, Chocolate>();
+	private String contextPath;
 	
 	public ChocolateDAO() {
 		
 	}
 	
 	public ChocolateDAO(String contextPath) {
+		this.contextPath = contextPath;
 		loadChocolates(contextPath);
 	}
 
@@ -49,60 +54,80 @@ public class ChocolateDAO {
 	}
 	
 	public Chocolate save(Chocolate chocolate) {
-		Integer maxId = -1;
-		for (String id : chocolates.keySet()) {
+	
+		Integer maxId = 0;
+		for(String id: chocolates.keySet()) {
 			int idNum =Integer.parseInt(id);
-			if (idNum > maxId) {
+			if(idNum > maxId) {
 				maxId = idNum;
 			}
 		}
+		
 		maxId++;
-		chocolate.setId(maxId.toString());
-		chocolates.put(chocolate.getId(), chocolate);
-		return chocolate;
+		
+	    chocolate.setId(maxId.toString());
+	    chocolates.put(chocolate.getId(), chocolate);
+	    saveToFile(chocolate);
+	    return chocolate;
 	}
+	
+	private void saveToFile(Chocolate chocolate) {
+        try {
+            Path filePath = Paths.get(contextPath + "/chocolates.csv");
+            BufferedWriter out = new BufferedWriter(new FileWriter(filePath.toString(), true));
+
+            out.write(chocolate.getId() + "," + chocolate.getChocolateName() + "," +
+                    chocolate.getPrice() + "," + chocolate.getVariety() + "," +
+                    chocolate.getFactoryId() + "," + chocolate.getType() + "," +
+                    chocolate.getWeight() + "," + chocolate.getDescription() + "," +
+                    chocolate.getImageUri() + "," + chocolate.getNumberOfChocolates() + "\n");
+
+            out.flush();
+            out.close();
+            System.out.println("Chocolate saved to file successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 	private void loadChocolates(String contextPath) {
 		BufferedReader in = null;
 		try {
-			File file = new File(contextPath + "/chocolates.txt");
-			System.out.println(file.getCanonicalPath());
+			File file = new File(contextPath +"/chocolates.csv");
 			in = new BufferedReader(new FileReader(file));
-			String line, id = "", chocolateName = "", price = "",variety="",factory="",type="",weight="",description="",imageUri="",numberOfChocolates="";
-			StringTokenizer st;
+			String line;
+
 			while ((line = in.readLine()) != null) {
 				line = line.trim();
-				if (line.equals("") || line.indexOf('#') == 0)
+				if (line.equals("") || line.startsWith("#"))
 					continue;
-				st = new StringTokenizer(line, ";");
-				while (st.hasMoreTokens()) {
-					id = st.nextToken().trim();
-					chocolateName = st.nextToken().trim();
-					price = st.nextToken().trim();
-					variety = st.nextToken().trim();
-					factory = st.nextToken().trim();
-					type = st.nextToken().trim();
-					weight = st.nextToken().trim();
-					description = st.nextToken().trim();
-					imageUri = st.nextToken().trim();
-					price = st.nextToken().trim();
-					numberOfChocolates = st.nextToken().trim();
 
+				String[] data = line.split(",");
 
-				}
-				//chocolates.put(id, new Chocolate(id, chocolateName, Double
-						//.parseDouble(price),variety,factory,type,Double.parseDouble(weight),description,imageUri,Integer.parseInt(numberOfChocolates)));
+				Chocolate chocolate = new Chocolate();
+				chocolate.setId(data[0]);
+				chocolate.setChocolateName(data[1]);
+				chocolate.setPrice(Double.parseDouble(data[2]));
+				chocolate.setVariety(data[3]);
+				chocolate.setFactoryId(Integer.parseInt(data[4]));
+				chocolate.setType(data[5]);
+				chocolate.setWeight(Double.parseDouble(data[6]));
+				chocolate.setDescription(data[7]);
+				chocolate.setImageUri(data[8]);
+				chocolate.setNumberOfChocolates(Integer.parseInt(data[9]));
+
+				chocolates.put(chocolate.getId(), chocolate);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if ( in != null ) {
+			if (in != null) {
 				try {
 					in.close();
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-				catch (Exception e) { }
 			}
 		}
-		
 	}
 }

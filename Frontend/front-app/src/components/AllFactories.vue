@@ -18,9 +18,10 @@
                     <td>{{ factory.grade }}</td>
                 </tr>
             </tbody>
-        </table>
+        </table> 
+      
     </div>
-
+   
 </template>
 
 <script>
