@@ -66,39 +66,43 @@ public class FactoryDAO {
 		return factory;
 	}
 
-	private void loadFactories(String contextPath) {
-        BufferedReader in = null;
-        try {
-            File file = new File(contextPath + "/factories.txt");
-            in = new BufferedReader(new FileReader(file));
-            String line, id, factoryName, workingTime, status, logoUri, grade, locationId;
-            while ((line = in.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty() || line.charAt(0) == '#') continue;
-                StringTokenizer st = new StringTokenizer(line, ";");
-                id = st.nextToken().trim();
-                factoryName = st.nextToken().trim();
-                workingTime = st.nextToken().trim();
-                status = st.nextToken().trim();
-                logoUri = st.nextToken().trim();
-                grade = st.nextToken().trim();
-                locationId = st.nextToken().trim();  
+	 private void loadFactories(String contextPath) {
+	        BufferedReader in = null;
+	        try {
+	            File file = new File(contextPath + "/factories.csv");
+	            in = new BufferedReader(new FileReader(file));
+	            String line;
+	            while ((line = in.readLine()) != null) {
+	                line = line.trim();
+	                if (line.isEmpty() || line.startsWith("#")) continue;  // Preskoči prazne linije i komentare
 
-                boolean statusBool = Boolean.parseBoolean(status);
-                Location location = locationDAO.findLocation(locationId);  
-                factories.put(id, new Factory(id, factoryName, Integer.parseInt(workingTime), statusBool, logoUri, Double.parseDouble(grade), location));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (Exception e) { }
-            }
-        }
-    }
-	
+	                String[] data = line.split(",");
+	                if (data.length < 7) continue;  // Preskoči redove koji nemaju svih 7 podataka
+
+	                String id = data[0].trim();
+	                String factoryName = data[1].trim();
+	                int workingTime = Integer.parseInt(data[2].trim());
+	                boolean isStatus = Boolean.parseBoolean(data[3].trim());
+	                String logoUri = data[4].trim();
+	                double grade = Double.parseDouble(data[5].trim());
+	                String locationId = data[6].trim();
+
+	                Location location = locationDAO.findLocation(locationId);
+	                Factory factory = new Factory(id, factoryName, workingTime, isStatus, logoUri, grade, location);
+	                factories.put(id, factory);  // Koristi ID kao ključ za mapu
+	            }
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        } finally {
+	            if (in != null) {
+	                try {
+	                    in.close();
+	                } catch (Exception e) {
+	                    e.printStackTrace();
+	                }
+	            }
+	        }
+	    }
 	public Collection<Factory> findAllAndSort() {
 	    return factories.values().stream()
 	            .sorted(Comparator.comparing(Factory::getIsStatus).reversed())  // Sortiranje po statusu, true prvo

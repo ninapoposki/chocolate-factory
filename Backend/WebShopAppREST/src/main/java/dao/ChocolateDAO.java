@@ -85,7 +85,10 @@ public class ChocolateDAO {
             out.flush();
             out.close();
             System.out.println("Chocolate saved to file successfully.");
-            System.out.println(contextPath);
+
+            System.out.println("Kontekstna putanja: " + contextPath);
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -119,6 +122,8 @@ public class ChocolateDAO {
 				chocolate.setIsOnStock(Boolean.parseBoolean(data[10]));
 
 				chocolates.put(chocolate.getId(), chocolate);
+		        System.out.println("Kontekstna putanja: " + contextPath);
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

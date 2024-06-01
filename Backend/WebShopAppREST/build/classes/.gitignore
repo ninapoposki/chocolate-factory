@@ -1,5 +1,6 @@
+/beans/
+/dao/
+/dto/
+/enumerations/
 /services/
 /validations/
-/dto/
-/dao/
-/beans/
