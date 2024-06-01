@@ -6,18 +6,20 @@ public class Chocolate{
 	private double price;
 	private String variety; //za kuvanje,obicna...
 	private Factory factory; //factoryId?
+	private int factoryId;
 	private String type; //crna,mlecna...
 	private double weight;
 	private String description;
 	private String imageUri; //ili image da imamo  i da u sebi ima tipove?
 	//private ChocolateStatus chocolateStatus; -ima na stanju nema na stanju\
 	private int numberOfChocolates;
+	private boolean isOnStock;
 	
 	public Chocolate() {
 		
 	}
 
-	public Chocolate(String id,String chocolateName, double price, String variety, Factory factory, String type, double weight,
+	/*public Chocolate(String id,String chocolateName, double price, String variety, Factory factory, String type, double weight,
 			String description, String imageUri, int numberOfChocolates) {
 		super();
 		this.id=id;
@@ -31,8 +33,25 @@ public class Chocolate{
 		this.imageUri = imageUri;
 		this.numberOfChocolates = numberOfChocolates;
 	}
+	*/
 
 	
+	public Chocolate(String id, String chocolateName, double price, String variety, int i, String type,
+			double weight, String description, String imageUri, int numberOfChocolates) {
+		super();
+		this.id = id;
+		this.chocolateName = chocolateName;
+		this.price = price;
+		this.variety = variety;
+		this.factoryId = i;
+		this.type = type;
+		this.weight = weight;
+		this.description = description;
+		this.imageUri = imageUri;
+		this.numberOfChocolates = numberOfChocolates;
+		this.isOnStock = isOnStock;
+	}
+
 	public String getId() {
 		return id;
 	}
@@ -116,5 +135,22 @@ public class Chocolate{
 	public void setNumberOfChocolates(int numberOfChocolates) {
 		this.numberOfChocolates = numberOfChocolates;
 	}
+
+	public int getFactoryId() {
+		return factoryId;
+	}
+
+	public void setFactoryId(int factoryId) {
+		this.factoryId = factoryId;
+	}
+
+	public boolean GetIsOnStock() {
+		return isOnStock;
+	}
+
+	public void setIsOnStock(boolean isOnStock) {
+		this.isOnStock = isOnStock;
+	}
+	
 	
 }
