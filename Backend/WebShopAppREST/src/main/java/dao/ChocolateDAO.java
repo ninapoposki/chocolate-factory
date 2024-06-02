@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 import beans.Chocolate;
 
@@ -70,6 +71,12 @@ public class ChocolateDAO {
 	    saveToFile(chocolate);
 	    return chocolate;
 	}
+	
+	public Collection<Chocolate> findChocolatesByFactoryId(String factoryId) {
+        return chocolates.values().stream()
+                .filter(chocolate -> (chocolate.getFactoryId()==Integer.parseInt(factoryId)))
+                .collect(Collectors.toList());
+    }
 	
 	private void saveToFile(Chocolate chocolate) {
         try {
