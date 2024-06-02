@@ -7,7 +7,9 @@ import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -53,4 +55,20 @@ public class ChocolateService {
         Chocolate savedChocolate = dao.save(chocolate);
         return Response.status(Response.Status.CREATED).entity(savedChocolate).build();
     }
+	
+	@PUT
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Chocolate updateChocolate(@PathParam("id") String id,Chocolate chocolate) {
+        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
+        return dao.updateChocolate(id, chocolate);
+	}
+	
+	@GET
+	@Path("/{id}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Chocolate getById(@PathParam("id") String id) {
+        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
+        return dao.findChocolates(id);
+	}
 }

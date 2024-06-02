@@ -35,23 +35,52 @@ public class ChocolateDAO {
 	}
 	
 	public Chocolate updateChocolate(String id, Chocolate chocolate) {
-		Chocolate c = chocolates.containsKey(id) ? chocolates.get(id) : null;
-		if (c == null) {
-			return save(chocolate);
-		} else {
-			c.setChocolateName(chocolate.getChocolateName());
-			c.setDescription(chocolate.getDescription());
-			c.setFactory(chocolate.getFactory());
-			c.setImageUri(c.getImageUri());
-			c.setNumberOfChocolates(c.getNumberOfChocolates());
-			c.setPrice(chocolate.getPrice());
-			c.setType(chocolate.getType());
-			c.setVariety(chocolate.getVariety());
-			c.setWeight(chocolate.getWeight());
-		}
-		
-		return c;
+	    Chocolate c = chocolates.containsKey(id) ? chocolates.get(id) : null;
+	    if (c == null) {
+	        return save(chocolate);
+	    } else {
+	        c.setChocolateName(chocolate.getChocolateName());
+	        c.setDescription(chocolate.getDescription());
+	        c.setFactory(chocolate.getFactory());
+	        c.setImageUri(chocolate.getImageUri());
+	        c.setNumberOfChocolates(chocolate.getNumberOfChocolates());
+	        c.setPrice(chocolate.getPrice());
+	        c.setType(chocolate.getType());
+	        c.setVariety(chocolate.getVariety());
+	        c.setWeight(chocolate.getWeight());
+	        saveChocolates(); // Ova metoda treba da ažurira sve promene u CSV fajlu
+	    }
+	    
+	    return c;
 	}
+	private void saveChocolates() {
+	    try {
+	        Path filePath = Paths.get(contextPath + "/chocolates.csv");
+	        BufferedWriter out = new BufferedWriter(new FileWriter(filePath.toString(), false)); // false za prepisivanje fajla
+	        for (Chocolate chocolate : chocolates.values()) {
+	            out.write(chocolateToCsv(chocolate) + "\n");
+	        }
+	        out.flush();
+	        out.close();
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
+
+	private String chocolateToCsv(Chocolate chocolate) {
+	    return chocolate.getId() + "," +
+	           chocolate.getChocolateName() + "," +
+	           chocolate.getPrice() + "," +
+	           chocolate.getVariety() + "," +
+	           chocolate.getFactoryId() + "," +
+	           chocolate.getType() + "," +
+	           chocolate.getWeight() + "," +
+	           chocolate.getDescription() + "," +
+	           chocolate.getImageUri() + "," +
+	           chocolate.getNumberOfChocolates() + "," +
+	           chocolate.getIsOnStock();
+	}
+
 	
 	public Chocolate save(Chocolate chocolate) {
 	
