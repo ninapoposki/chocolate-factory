@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -71,4 +72,12 @@ public class ChocolateService {
         ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
         return dao.findChocolates(id);
 	}
+
+	 @GET
+	    @Path("/{id}")
+	    @Produces(MediaType.APPLICATION_JSON)
+	    public Collection<Chocolate> getChocolatesByFactoryId(@PathParam("id") String factoryId) {
+	        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
+	        return dao.findChocolatesByFactoryId(factoryId);
+	    }
 }

@@ -3,7 +3,7 @@ import HomeView from '../views/HomeView.vue';
 import AddChocolate from '../views/AddChocolate.vue';
 import UpdateChocolate from '../views/UpdateChocolateView.vue';
 import Probica from '../views/ProbicaView.vue';
-
+import FactoryDetails from '@/components/FactoryDetails.vue';
 const routes = [
   {
     path: "/",
@@ -11,11 +11,12 @@ const routes = [
     component: HomeView,
   },
   {
-    path: "/add",
+    path: "/add/:id",
     name: "add",
     component: AddChocolate,
   },
   {
+
     path: "/probica",
     name: "probica",
     component: Probica,
@@ -26,6 +27,11 @@ const routes = [
     component: UpdateChocolate,
   },
 
+  {
+    path: "/details/:id",
+    name: "details",
+    component: FactoryDetails,
+  },
   {
     path: "/about",
     name: "about",

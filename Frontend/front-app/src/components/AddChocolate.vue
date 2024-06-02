@@ -30,19 +30,18 @@
           <label for="imageUri">Image URL:</label>
           <input type="text" v-model="newChocolate.imageUri" required />
         </div>
-        <div>
-          <label for="factoryId">Factory ID:</label>
-          <input type="text" v-model="newChocolate.factoryId" required />
-        </div>
+       
         <button type="submit">Add Chocolate</button>
       </form>
     </div>
   </template>
   
   <script setup>
-  import { ref } from 'vue';
+  import { ref, onMounted } from 'vue';
   import axios from 'axios';
-  
+  import { useRoute } from 'vue-router';
+  const route = useRoute();
+
   const newChocolate = ref({
     chocolateName: "",
     price: 0,
@@ -55,6 +54,10 @@
     numberOfChocolates: 0,
     isOnStock: false
   });
+  onMounted(() => {
+  const factoryId = route.params.id;
+  newChocolate.value.factoryId = factoryId;
+});
   
   function addChocolate() {
     axios.post('http://localhost:8080/WebShopAppREST/rest/chocolates/', newChocolate.value)
