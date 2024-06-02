@@ -16,6 +16,12 @@
                     <td>{{ factory.factoryName }}</td>
                     <td>{{ factory.location.street }} {{ factory.location.streetNumber }}, {{ factory.location.city }} {{ factory.location.postalCode }}</td>
                     <td>{{ factory.grade }}</td>
+          <button @click = "ShowDetails(factory.id)">
+            Show details 
+          </button>
+          <button @click = "AddNewChocolate(factory.id)">
+            Add chocolate 
+          </button>
                 </tr>
             </tbody>
         </table> 
@@ -26,6 +32,8 @@
 
 <script>
 import axios from 'axios';
+import { useRouter } from 'vue-router';
+
 
 export default {
     data() {
@@ -51,6 +59,13 @@ export default {
                 .catch(error => {
                     console.error('Error fetching factories', error);
                 });
+        },
+
+        AddNewChocolate(id){
+                 this.$router.push(`/add/${id}`);
+        },
+        ShowDetails(id){
+                 this.$router.push(`/details/${id}`);
         }
     }
 }
