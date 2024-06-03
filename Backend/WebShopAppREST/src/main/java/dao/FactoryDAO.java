@@ -31,8 +31,8 @@ public class FactoryDAO {
 		return factories.values();
 	}
 
-	public Factory findFactory(String id) {
-		return factories.containsKey(id) ? factories.get(id) : null;
+	public Factory findFactory(String factoryId) {
+		return factories.containsKey(factoryId) ? factories.get(factoryId) : null;
 	}
 	
 	public Factory updateFactory(String id, Factory factory) {
@@ -66,7 +66,7 @@ public class FactoryDAO {
 		return factory;
 	}
 
-	 private void loadFactories(String contextPath) {
+	 public void loadFactories(String contextPath) {
 	        BufferedReader in = null;
 	        try {
 	            File file = new File(contextPath + "/factories.csv");

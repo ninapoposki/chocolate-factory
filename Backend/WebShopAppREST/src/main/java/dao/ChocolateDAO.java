@@ -7,24 +7,30 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
 import beans.Chocolate;
+import beans.Factory;
 
 public class ChocolateDAO {
 	
 	private HashMap<String, Chocolate> chocolates = new HashMap<String, Chocolate>();
 	private String contextPath;
+	private FactoryDAO factoryDAO;
 	
 	public ChocolateDAO() {
 		
 	}
 	
-	public ChocolateDAO(String contextPath) {
+	public ChocolateDAO(String contextPath,FactoryDAO factoryDAO) {
 		this.contextPath = contextPath;
+		this.factoryDAO = factoryDAO; 
+	    this.factoryDAO.loadFactories(contextPath);
 		loadChocolates(contextPath);
+
 	}
 
 	public Collection<Chocolate> findAll() {
@@ -49,11 +55,15 @@ public class ChocolateDAO {
 	        c.setType(chocolate.getType());
 	        c.setVariety(chocolate.getVariety());
 	        c.setWeight(chocolate.getWeight());
+	        c.setFactoryId(chocolate.getFactoryId());
+	        var factory=factoryDAO.findFactory(String.valueOf(chocolate.getFactoryId()));
+	        c.setFactory(factory);
 	        saveChocolates(); // Ova metoda treba da ažurira sve promene u CSV fajlu
 	    }
 	    
 	    return c;
 	}
+	
 	private void saveChocolates() {
 	    try {
 	        Path filePath = Paths.get(contextPath + "/chocolates.csv");
@@ -79,7 +89,8 @@ public class ChocolateDAO {
 	           chocolate.getDescription() + "," +
 	           chocolate.getImageUri() + "," +
 	           chocolate.getNumberOfChocolates() + "," +
-	           chocolate.getIsOnStock();
+	           chocolate.getIsOnStock()+','+
+	           chocolate.getIsActive();
 	}
 
 	
@@ -102,10 +113,11 @@ public class ChocolateDAO {
 	}
 	
 	public Collection<Chocolate> findChocolatesByFactoryId(String factoryId) {
-        return chocolates.values().stream()
-                .filter(chocolate -> (chocolate.getFactoryId()==Integer.parseInt(factoryId)))
-                .collect(Collectors.toList());
-    }
+	    return chocolates.values().stream()
+	            .filter(chocolate -> chocolate.getFactoryId() == Integer.parseInt(factoryId) && chocolate.getIsActive())
+	            .collect(Collectors.toList());
+	}
+
 	
 	private void saveToFile(Chocolate chocolate) {
         try {
@@ -116,7 +128,7 @@ public class ChocolateDAO {
                     chocolate.getPrice() + "," + chocolate.getVariety() + "," +
                     chocolate.getFactoryId() + "," + chocolate.getType() + "," +
                     chocolate.getWeight() + "," + chocolate.getDescription() + "," +
-                    chocolate.getImageUri() + "," + chocolate.getNumberOfChocolates() + ","+ chocolate.getIsOnStock()+ "\n");
+                    chocolate.getImageUri() + "," + chocolate.getNumberOfChocolates() + ","+ chocolate.getIsOnStock()+ ","+ chocolate.getIsActive()+"\n");
 
             out.flush();
             out.close();
@@ -143,20 +155,24 @@ public class ChocolateDAO {
 					continue;
 
 				String[] data = line.split(",");
-
+				String factoryId = data[4].trim();
+                Factory factory = factoryDAO.findFactory(factoryId);
 				Chocolate chocolate = new Chocolate();
 				chocolate.setId(data[0]);
 				chocolate.setChocolateName(data[1]);
 				chocolate.setPrice(Double.parseDouble(data[2]));
 				chocolate.setVariety(data[3]);
-				chocolate.setFactoryId(Integer.parseInt(data[4]));
+                chocolate.setFactoryId(Integer.parseInt(factoryId));
 				chocolate.setType(data[5]);
 				chocolate.setWeight(Double.parseDouble(data[6]));
 				chocolate.setDescription(data[7]);
 				chocolate.setImageUri(data[8]);
 				chocolate.setNumberOfChocolates(Integer.parseInt(data[9]));
 				chocolate.setIsOnStock(Boolean.parseBoolean(data[10]));
-
+				chocolate.setIsActive(Boolean.parseBoolean(data[11]));
+				
+				
+				chocolate.setFactory(factory);
 				chocolates.put(chocolate.getId(), chocolate);
 		        System.out.println("Kontekstna putanja: " + contextPath);
 
@@ -173,4 +189,21 @@ public class ChocolateDAO {
 			}
 		}
 	}
+	public void deleteChocolate(String id) {
+	    if (chocolates.containsKey(id)) {
+	        Chocolate chocolate = chocolates.get(id);
+	        chocolate.setIsActive(false);  
+	        saveChocolates();  
+
+	        // Ažuriraj listu čokolada u fabrici ako postoji
+	        if (chocolate.getFactory() != null) {
+	            Collection<Chocolate> factoryChocolates = findChocolatesByFactoryId(String.valueOf(chocolate.getFactoryId()));
+	            factoryChocolates.removeIf(c -> !c.getIsActive()); // Ukloni sve neaktivne čokolade iz liste
+	            // Ažuriraj čokolade u Factory objektu
+	            chocolate.getFactory().setChocolates(new ArrayList<>(factoryChocolates));
+	        }
+	    }
+	}
+
+
 }

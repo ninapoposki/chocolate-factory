@@ -6,6 +6,7 @@ import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -18,6 +19,8 @@ import javax.ws.rs.core.Response;
 
 import beans.Chocolate;
 import dao.ChocolateDAO;
+import dao.FactoryDAO;
+import dao.LocationDAO;
 
 
 @Path("/chocolates")
@@ -30,11 +33,17 @@ public class ChocolateService {
 	
 	@PostConstruct
 	public void init() {
-		if(ctx.getAttribute("chocolateDAO")==null) {
-			String ContextPath=ctx.getRealPath("");
-			ctx.setAttribute("chocolateDAO", new ChocolateDAO(ContextPath));
-		}
+	    if (ctx.getAttribute("chocolateDAO") == null) {
+	        String contextPath = ctx.getRealPath("");
+	        LocationDAO locationDAO = new LocationDAO(contextPath); // Pretpostavljam da imate LocationDAO
+	        FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO);
+	        factoryDAO.loadFactories(contextPath); // Osiguravamo da se fabrike učitaju
+	        ctx.setAttribute("factoryDAO", factoryDAO); // Čuvamo factoryDAO u kontekstu
+	        ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath, factoryDAO);
+	        ctx.setAttribute("chocolateDAO", chocolateDAO); // Čuvamo chocolateDAO u kontekstu
+	    }
 	}
+
 	
 	@GET
 	@Path("/")
@@ -53,6 +62,7 @@ public class ChocolateService {
         chocolate.setImageUri("slika");
         chocolate.setNumberOfChocolates(0); 
         chocolate.setIsOnStock(false); 
+        chocolate.setIsActive(true);
         Chocolate savedChocolate = dao.save(chocolate);
         return Response.status(Response.Status.CREATED).entity(savedChocolate).build();
     }
@@ -66,7 +76,7 @@ public class ChocolateService {
 	}
 	
 	@GET
-	@Path("/{id}")
+	@Path("/choco/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Chocolate getById(@PathParam("id") String id) {
         ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
@@ -74,10 +84,19 @@ public class ChocolateService {
 	}
 
 	 @GET
-	    @Path("/{id}")
-	    @Produces(MediaType.APPLICATION_JSON)
-	    public Collection<Chocolate> getChocolatesByFactoryId(@PathParam("id") String factoryId) {
+	 @Path("/{id}")
+	 @Produces(MediaType.APPLICATION_JSON)
+	 public Collection<Chocolate> getChocolatesByFactoryId(@PathParam("id") String factoryId) {
 	        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
 	        return dao.findChocolatesByFactoryId(factoryId);
-	    }
+	  }
+	 
+	 @DELETE
+	 @Path("/{id}")
+	 @Produces(MediaType.APPLICATION_JSON)
+	 public void deleteChocolate(@PathParam("id") String id) {
+	     ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
+	     dao.deleteChocolate(id);
+	 }
+
 }

@@ -49,6 +49,13 @@
           <td>{{ chocolate.type }}</td>
           <td>{{ chocolate.weight }}</td>
           <td>{{ chocolate.description }}</td>
+          <tr>
+            <td><button @click="updateChocolate(chocolate)">Change chocolate</button></td>
+            <td><button @click="deleteChocolate(chocolate.id)">Delete chocolate</button></td>
+          </tr>
+          
+      
+
         </tr>
       </table>
     </div>
@@ -63,8 +70,9 @@
   <script setup>
   import { ref, onMounted } from 'vue';
   import axios from 'axios';
-  import { useRoute } from 'vue-router';
+  import { useRoute ,useRouter} from 'vue-router';
   
+  const router = useRouter();
   const route = useRoute();
   const factory = ref(null);
   const chocolates = ref([]);
@@ -83,6 +91,26 @@
     chocolates.value = response.data;
   });
   });
+  function updateChocolate(chocolate) {
+  router.push({ name: 'update', params: { id: chocolate.id } });
+  }
+
+  function deleteChocolate(chocolateId) {
+  axios.delete(`http://localhost:8080/WebShopAppREST/rest/chocolates/${chocolateId}`)
+    .then(() => {
+      // Uklanja čokoladu iz liste nakon uspešnog brisanja
+      chocolates.value = chocolates.value.filter(c => c.id !== chocolateId);
+      alert('Chocolate deleted successfully');
+    })
+    .catch(error => {
+      console.error('Error deleting chocolate', error);
+      alert('Failed to delete chocolate');
+    });
+}
+
+
+
+defineExpose({ updateChocolate });
   </script>
   
   <style scoped>
@@ -100,4 +128,8 @@
   img {
     max-width: 100px;
   }
+  .odvojeniDugmici{
+    border:0px solid transparent;
+  }
+
   </style>

@@ -14,6 +14,8 @@ public class Chocolate{
 	//private ChocolateStatus chocolateStatus; -ima na stanju nema na stanju\
 	private int numberOfChocolates;
 	private boolean isOnStock;
+    private boolean isActive;  
+
 	
 	public Chocolate() {
 		
@@ -37,7 +39,7 @@ public class Chocolate{
 
 	
 	public Chocolate(String id, String chocolateName, double price, String variety, int i, String type,
-			double weight, String description, String imageUri, int numberOfChocolates, boolean isOnStock) {
+			double weight, String description, String imageUri, int numberOfChocolates, boolean isOnStock,Factory factory,boolean isActive) {
 		super();
 		this.id = id;
 		this.chocolateName = chocolateName;
@@ -50,6 +52,8 @@ public class Chocolate{
 		this.imageUri = imageUri;
 		this.numberOfChocolates = numberOfChocolates;
 		this.isOnStock = isOnStock;
+		this.factory=factory;
+		this.isActive=isActive;
 	}
 
 	public String getId() {
@@ -68,6 +72,14 @@ public class Chocolate{
 	public void setChocolateName(String chocolateName) {
 		this.chocolateName = chocolateName;
 	}
+	 public boolean getIsActive() {
+	        return isActive;
+	    }
+
+	    public void setIsActive(boolean isActive) {
+	        this.isActive = isActive;
+	    }
+
 
 	public double getPrice() {
 		return price;
