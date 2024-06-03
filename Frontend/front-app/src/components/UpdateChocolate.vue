@@ -29,9 +29,14 @@
           <input type="text" v-model="chocolate.imageUri" required />
         </div>
         <div>
-          <label for="factoryId">Factory:</label>
-          <select type="text" v-model="chocolate.factoryId" required />
-        </div>
+      <label for="factoryId">Factory:</label>
+      <select v-model="chocolate.factoryId" required>
+        <option :value="chocolate.factory.id">{{ chocolate.factory.factoryName }}</option>
+        <option v-for="factory in factories" :value="factory.id" :key="factory.id" >
+          {{ factory.factoryName }}
+        </option>
+      </select>
+    </div>
 
         <div class="button-type">
             <button @click="updateChocolate">Update chocolate</button>
@@ -49,11 +54,14 @@ export default {
   name: 'UpdateChocolate',
   data() {
     return {
-      chocolate: null
+      chocolate: null,
+      factories: [] 
     };
   },
   created() {
     this.fetchOneChocolate();
+    this.fetchFactories();
+
   },
   methods: {
     fetchOneChocolate() {
@@ -63,29 +71,55 @@ export default {
         console.error('Chocolate ID is missing');
         return;
       }
-      axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates/${id}`)
+      axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates/choco/${id}`)
         .then(response => {
           console.log('Chocolate data:', response.data); 
           this.chocolate = response.data;
         })
         .catch(error => {
           console.error('Error fetching chocolate:', error);
+
+        });
+    },
+    fetchFactories() {
+      axios.get('http://localhost:8080/WebShopAppREST/rest/factories')
+        .then(response => {
+          this.factories = response.data;
+        })
+        .catch(error => {
+          console.error('Error fetching factories:', error);
+          this.factories = []; 
+
         });
     },
     updateChocolate() {
-      axios.put(`http://localhost:8080/WebShopAppREST/rest/chocolates/${this.chocolate.id}`, this.chocolate)
-        .then(response => {
-          alert("You have successfully made the changes!");
-          this.$router.push('/probica'); //zameni posle sa prikazom jedne
-        })
-        .catch(error => {
-          console.error('Error updating chocolate', error);
+  axios.put(`http://localhost:8080/WebShopAppREST/rest/chocolates/${this.chocolate.id}`, this.chocolate)
+    .then(response => {
+      alert("You have successfully made the changes!");
+      if (this.chocolate.factoryId) {
+        this.$router.push({
+          name: 'details',
+          params: { id: this.chocolate.factoryId }
         });
-    },
-    quitClick(){
-      this.$router.push('/probica');
-    }
+      } else {
+        console.error('Factory ID is missing');
+      }
+    })
+    .catch(error => {
+      console.error('Error updating chocolate', error);
+    });
+  },
+  quitClick(){
+        if (this.chocolate.factoryId) {
+          this.$router.push({
+            name: 'details',
+            params: { id: this.chocolate.factoryId }
+          });
+        } else {
+          console.error('Factory ID is missing');
+        }
     
+       }
   }
 }
 
@@ -95,65 +129,65 @@ export default {
 h2 {
   text-align: center;
   color: #333;
-  font-size: 20px; /* Malo smanjen font za naslov */
+  font-size: 20px; 
 }
 
 form {
   display: flex;
   flex-direction: column;
-  max-width: 300px; /* Još više smanjena maksimalna širina */
-  margin: 20px auto; /* Smanjen razmak od vrha */
+  max-width: 300px; 
+  margin: 20px auto; 
   padding: 15px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
-  background: #fff; /* Svjetlija pozadina */
-  border: 2px solid #42b983; /* Boja na border okvira */
+  background: #fff; 
+  border: 2px solid #42b983; 
 }
 
 form > div {
-  margin-bottom: 15px; /* Malo smanjen razmak između polja */
+  margin-bottom: 15px; 
 }
 
 label {
-  display: block; /* Label ide iznad inputa */
-  margin-bottom: 8px; /* Malo smanjen razmak između labela i inputa */
+  display: block; 
+  margin-bottom: 8px; 
   color: #666;
-  font-size: 14px; /* Smanjen font za label */
+  font-size: 14px; 
 }
 
 input, textarea, select {
-  padding: 10px; /* Malo smanjen padding unutar inputa */
-  font-size: 14px; /* Smanjen font unutar inputa */
-  border: 1px solid #ccc; /* Tanji border */
-  border-radius: 5px; /* Blago zaobljeni uglovi */
-  background: #f8f8f8; /* Svjetlija pozadina za input */
+  padding: 10px; 
+  font-size: 14px; 
+  border: 1px solid #ccc; 
+  border-radius: 5px; 
+  background: #f8f8f8;
 }
 
 input:focus, textarea:focus, select:focus {
   border-color: #42b983;
   outline: none;
-  background: #fff; /* Promjena pozadine pri fokusu */
+  background: #fff; 
 }
 
 .button-type {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px; /* Malo smanjen razmak između dugmadi */
+  gap: 8px; 
   margin-top: 10px;
 }
 
 button {
   padding: 8px 16px;
-  font-size: 14px; /* Smanjen font za dugme */
+  font-size: 14px; 
   background-color: #42b983;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  width: auto; /* Dugmići će biti širi samo koliko im je potrebno */
-  max-width: 80%; /* Maksimalna širina dugmića */
+  width: auto; 
+  max-width: 80%; 
 }
 
 button:hover {

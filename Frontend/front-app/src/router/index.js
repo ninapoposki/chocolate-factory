@@ -2,7 +2,6 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import AddChocolate from '../views/AddChocolate.vue';
 import UpdateChocolate from '../views/UpdateChocolateView.vue';
-import Probica from '../views/ProbicaView.vue';
 import FactoryDetails from '@/components/FactoryDetails.vue';
 const routes = [
   {
@@ -14,12 +13,6 @@ const routes = [
     path: "/add/:id",
     name: "add",
     component: AddChocolate,
-  },
-  {
-
-    path: "/probica",
-    name: "probica",
-    component: Probica,
   },
   {
     path: "/update/:id",
