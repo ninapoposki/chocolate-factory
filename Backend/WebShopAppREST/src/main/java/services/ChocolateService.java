@@ -22,6 +22,7 @@ import dao.ChocolateDAO;
 import dao.FactoryDAO;
 import dao.LocationDAO;
 
+import validations.ChocolateValidator;
 
 @Path("/chocolates")
 public class ChocolateService {
@@ -53,7 +54,7 @@ public class ChocolateService {
 		return dao.findAll();
 	}
 	
-	@POST
+	/*@POST
     @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -65,7 +66,25 @@ public class ChocolateService {
         chocolate.setIsActive(true);
         Chocolate savedChocolate = dao.save(chocolate);
         return Response.status(Response.Status.CREATED).entity(savedChocolate).build();
-    }
+    }*/
+	 @POST
+	    @Path("/")
+	    @Consumes(MediaType.APPLICATION_JSON)
+	    @Produces(MediaType.APPLICATION_JSON)
+	    public Response createChocolate(Chocolate chocolate) {
+	        if (!ChocolateValidator.isValidChocolate(chocolate)) {
+	            return Response.status(Response.Status.BAD_REQUEST)
+	                           .entity("Invalid chocolate data")
+	                           .build();
+	        }
+
+	        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
+	        chocolate.setImageUri("slika");
+	        chocolate.setNumberOfChocolates(0); 
+	        chocolate.setIsOnStock(false); 
+	        Chocolate savedChocolate = dao.save(chocolate);
+	        return Response.status(Response.Status.CREATED).entity(savedChocolate).build();
+	    }
 	
 	@PUT
 	@Path("/{id}")
