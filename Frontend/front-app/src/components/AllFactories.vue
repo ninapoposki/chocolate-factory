@@ -14,9 +14,9 @@
           </thead>
           <tbody>
             <tr v-for="factory in factories" :key="factory.id">
-              <td><img :src="factory.logoUri" alt="Factory Logo" class="logo" /></td>
               <td>{{ factory.factoryName }}</td>
               <td>{{ factory.location.street }} {{ factory.location.streetNumber }}, {{ factory.location.city }} {{ factory.location.postalCode }}</td>
+              
               <td>{{ factory.grade }}</td>
               <tr class="buttons">
                 <td class="button_two"><button @click="ShowDetails(factory.id)">Show details</button></td>
@@ -67,8 +67,7 @@
   }
   </script>
   
-  <style scoped>
-  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+  <style>
   
   body {
     font-family: 'Roboto', sans-serif;

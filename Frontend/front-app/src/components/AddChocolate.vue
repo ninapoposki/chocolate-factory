@@ -30,6 +30,7 @@
           <label for="imageUri">Image URL:</label>
           <input type="text" v-model="newChocolate.imageUri" />
         </div>
+        
         <p>{{error}}</p>
         <button type="submit">Add Chocolate</button>
       </form>
@@ -95,10 +96,12 @@
   } else {
     error.value = '';
   }
+ 
 
     axios.post('http://localhost:8080/WebShopAppREST/rest/chocolates/', newChocolate.value)
       .then(response => {
         console.log(response.data);
+        alert("You have successfully added chocolate!");
         newChocolate.value = {
           chocolateName: "",
           price: 0,
@@ -116,6 +119,7 @@
         console.log(error);
       });
   }
+
   </script>
   
   <style scoped>

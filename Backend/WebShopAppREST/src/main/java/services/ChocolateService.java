@@ -80,8 +80,8 @@ public class ChocolateService {
 
 	        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
 	        //chocolate.setImageUri("slika");
+	        chocolate.setIsOnStock(false);  //da li fali set is active?     
 	        chocolate.setNumberOfChocolates(0); 
-	        chocolate.setIsOnStock(false);  //da li fali set is active?
 	        chocolate.setIsActive(true);
 	        Chocolate savedChocolate = dao.save(chocolate);
 	        return Response.status(Response.Status.CREATED).entity(savedChocolate).build();
