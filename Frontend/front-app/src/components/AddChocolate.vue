@@ -56,7 +56,7 @@
     numberOfChocolates: 0,
     isOnStock: false
   });
-  const regex = /^[A-Za-z]+(\s[A-Za-z]+)*$/;
+  const regex = /^\s*[A-Za-z]+(\s+[A-Za-z]+)*\s*$/;
   onMounted(() => {
   const factoryId = route.params.id;
   newChocolate.value.factoryId = factoryId;

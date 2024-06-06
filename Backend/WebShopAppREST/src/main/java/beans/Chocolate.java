@@ -1,10 +1,13 @@
 package beans;
 
+import javax.json.bind.annotation.JsonbTransient;
+
 public class Chocolate{
 	private String id;
 	private String chocolateName;
 	private double price;
 	private String variety; //za kuvanje,obicna...
+    @JsonbTransient
 	private Factory factory; //factoryId?
 	private int factoryId;
 	private String type; //crna,mlecna...
@@ -96,7 +99,7 @@ public class Chocolate{
 	public void setVariety(String variety) {
 		this.variety = variety;
 	}
-
+    @JsonbTransient
 	public Factory getFactory() {
 		return factory;
 	}

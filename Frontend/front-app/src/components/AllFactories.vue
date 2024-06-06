@@ -18,10 +18,10 @@
               <td>{{ factory.location.street }} {{ factory.location.streetNumber }}, {{ factory.location.city }} {{ factory.location.postalCode }}</td>
               
               <td>{{ factory.grade }}</td>
-              <td class="buttons">
-                <button @click="ShowDetails(factory.id)">Show details</button>
-                <button class="small-button" @click="AddNewChocolate(factory.id)">Add chocolate</button>
-              </td>
+              <tr class="buttons">
+                <td class="button_two"><button @click="ShowDetails(factory.id)">Show details</button></td>
+                <td class="button_two"><button class="small-button" @click="AddNewChocolate(factory.id)">Add chocolate</button></td>
+              </tr>
             </tr>
           </tbody>
         </table>
@@ -109,6 +109,9 @@
     padding: 12px 15px;
     text-align: left;
   }
+  .button_two{
+    border:0px ;
+  }
   
   th {
     background-color: #f5f5f5;
@@ -142,6 +145,10 @@
     cursor: pointer;
     transition: background-color 0.3s;
   }
+  .logo {
+  max-width: 100px; 
+  height: auto;
+}
   
   button:hover {
     background-color: #36a372;
