@@ -30,6 +30,7 @@
           <label for="imageUri">Image URL:</label>
           <input type="text" v-model="newChocolate.imageUri" />
         </div>
+        
         <p>{{error}}</p>
         <button type="submit">Add Chocolate</button>
       </form>
@@ -55,7 +56,7 @@
     numberOfChocolates: 0,
     isOnStock: false
   });
-  const regex = /^[A-Za-z]+$/;
+  const regex = /^[A-Za-z]+(\s[A-Za-z]+)*$/;
   onMounted(() => {
   const factoryId = route.params.id;
   newChocolate.value.factoryId = factoryId;
@@ -95,11 +96,12 @@
   } else {
     error.value = '';
   }
+ 
 
     axios.post('http://localhost:8080/WebShopAppREST/rest/chocolates/', newChocolate.value)
       .then(response => {
         console.log(response.data);
-        // Clear the form after successful submission
+        alert("You have successfully added chocolate!");
         newChocolate.value = {
           chocolateName: "",
           price: 0,
@@ -117,6 +119,7 @@
         console.log(error);
       });
   }
+
   </script>
   
   <style scoped>
