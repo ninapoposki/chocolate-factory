@@ -81,16 +81,16 @@ public class ChocolateDAO {
 
 	private String chocolateToCsv(Chocolate chocolate) {
 	    return chocolate.getId() + "," +
-	           chocolate.getChocolateName() + "," +
+	           "\"" + chocolate.getChocolateName().replace("\"", "\"\"") + "\"," +
 	           chocolate.getPrice() + "," +
-	           chocolate.getVariety() + "," +
+	           "\"" + chocolate.getVariety().replace("\"", "\"\"") + "\"," +
 	           chocolate.getFactoryId() + "," +
-	           chocolate.getType() + "," +
+	           "\"" + chocolate.getType().replace("\"", "\"\"") + "\"," +
 	           chocolate.getWeight() + "," +
-	           chocolate.getDescription() + "," +
-	           chocolate.getImageUri() + "," +
+	           "\"" + chocolate.getDescription().replace("\"", "\"\"") + "\"," +
+	           "\"" + chocolate.getImageUri().replace("\"", "\"\"") + "\"," +
 	           chocolate.getNumberOfChocolates() + "," +
-	           chocolate.getIsOnStock()+','+
+	           chocolate.getIsOnStock() + ',' +
 	           chocolate.getIsActive();
 	}
 
@@ -144,52 +144,69 @@ public class ChocolateDAO {
     }
 
 	private void loadChocolates(String contextPath) {
-		BufferedReader in = null;
-		try {
-			File file = new File(contextPath +"/chocolates.csv");
-			in = new BufferedReader(new FileReader(file));
-			String line;
+	    BufferedReader in = null;
+	    try {
+	        File file = new File(contextPath + "/chocolates.csv");
+	        in = new BufferedReader(new FileReader(file));
+	        String line;
 
-			while ((line = in.readLine()) != null) {
-				line = line.trim();
-				if (line.equals("") || line.startsWith("#"))
-					continue;
+	        while ((line = in.readLine()) != null) {
+	            line = line.trim();
+	            if (line.equals("") || line.startsWith("#"))
+	                continue;
 
-				String[] data = line.split(",");
-				String factoryId = data[4].trim();
-                Factory factory = factoryDAO.findFactory(factoryId);
-				Chocolate chocolate = new Chocolate();
-				chocolate.setId(data[0]);
-				chocolate.setChocolateName(data[1]);
-				chocolate.setPrice(Double.parseDouble(data[2]));
-				chocolate.setVariety(data[3]);
-                chocolate.setFactoryId(Integer.parseInt(factoryId));
-				chocolate.setType(data[5]);
-				chocolate.setWeight(Double.parseDouble(data[6]));
-				chocolate.setDescription(data[7]);
-				chocolate.setImageUri(data[8]);
-				chocolate.setNumberOfChocolates(Integer.parseInt(data[9]));
-				chocolate.setIsOnStock(Boolean.parseBoolean(data[10]));
-				chocolate.setIsActive(Boolean.parseBoolean(data[11]));
-				
-				
-				chocolate.setFactory(factory);
-				chocolates.put(chocolate.getId(), chocolate);
-		        System.out.println("Kontekstna putanja: " + contextPath);
+	            String[] data = parseCsvLine(line);
+	            String factoryId = data[4].trim();
+	            Factory factory = factoryDAO.findFactory(factoryId);
+	            Chocolate chocolate = new Chocolate();
+	            chocolate.setId(data[0]);
+	            chocolate.setChocolateName(data[1].replace("\"\"", "\""));
+	            chocolate.setPrice(Double.parseDouble(data[2]));
+	            chocolate.setVariety(data[3].replace("\"\"", "\""));
+	            chocolate.setFactoryId(Integer.parseInt(factoryId));
+	            chocolate.setType(data[5].replace("\"\"", "\""));
+	            chocolate.setWeight(Double.parseDouble(data[6]));
+	            chocolate.setDescription(data[7].replace("\"\"", "\""));
+	            chocolate.setImageUri(data[8].replace("\"\"", "\""));
+	            chocolate.setNumberOfChocolates(Integer.parseInt(data[9]));
+	            chocolate.setIsOnStock(Boolean.parseBoolean(data[10]));
+	            chocolate.setIsActive(Boolean.parseBoolean(data[11]));
 
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			if (in != null) {
-				try {
-					in.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}
+	            chocolate.setFactory(factory);
+	            chocolates.put(chocolate.getId(), chocolate);
+	            System.out.println("Kontekstna putanja: " + contextPath);
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    } finally {
+	        if (in != null) {
+	            try {
+	                in.close();
+	            } catch (Exception e) {
+	                e.printStackTrace();
+	            }
+	        }
+	    }
 	}
+
+	private String[] parseCsvLine(String line) {
+	    List<String> tokens = new ArrayList<>();
+	    StringBuilder currentToken = new StringBuilder();
+	    boolean inQuotes = false;
+	    for (char c : line.toCharArray()) {
+	        if (c == '\"') {
+	            inQuotes = !inQuotes;
+	        } else if (c == ',' && !inQuotes) {
+	            tokens.add(currentToken.toString());
+	            currentToken.setLength(0);
+	        } else {
+	            currentToken.append(c);
+	        }
+	    }
+	    tokens.add(currentToken.toString());
+	    return tokens.toArray(new String[0]);
+	}
+
 	public void deleteChocolate(String id) {
 	    if (chocolates.containsKey(id)) {
 	        Chocolate chocolate = chocolates.get(id);

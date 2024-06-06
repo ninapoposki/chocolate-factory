@@ -27,6 +27,9 @@
     <div>
       <label for="imageUri">Image URL:</label>
       <input type="text" v-model="chocolateCopy.imageUri" required />
+      <div v-if="chocolateCopy.imageUri" class="image-preview-container">
+        <img :src="chocolateCopy.imageUri" alt="Preview Image" class="image-preview" />
+      </div>
     </div>
     <div>
       <label for="factoryId">Factory:</label>
@@ -232,4 +235,12 @@ button:hover {
   background-color: #369f79;
 }
 
+.image-preview {
+  max-width: 50px;
+  margin-top: 10px;
+}
+
+.error {
+  color: red;
+}
 </style>

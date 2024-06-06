@@ -132,6 +132,7 @@ td {
   height: auto;
 }
 
+
 .buttons {
   display: flex;
   gap: 10px;

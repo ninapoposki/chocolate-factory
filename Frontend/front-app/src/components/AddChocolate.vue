@@ -28,7 +28,13 @@
         </div>
         <div>
           <label for="imageUri">Image URL:</label>
-          <input type="text" v-model="newChocolate.imageUri" />
+          <input type="text" v-model="newChocolate.imageUri" @input="validateImageUrl" />
+          <div v-if="imageUrlValid">
+            <img :src="newChocolate.imageUri" alt="Preview Image" class="image-preview" />
+          </div>
+          <div v-else-if="newChocolate.imageUri">
+            <p class="error">Invalid image URL</p>
+          </div>
         </div>
         
         <p>{{error}}</p>
@@ -56,11 +62,16 @@
     numberOfChocolates: 0,
     isOnStock: false
   });
+  const imageUrlValid = ref(true);
   const regex = /^\s*[A-Za-z]+(\s+[A-Za-z]+)*\s*$/;
   onMounted(() => {
   const factoryId = route.params.id;
   newChocolate.value.factoryId = factoryId;
 });
+function validateImageUrl() {
+    const url = newChocolate.value.imageUri;
+    imageUrlValid.value = url && url.match(/^(http|https):\/\/[^\s$.?#].[^\s]*$/);
+}
   
   function addChocolate() {
 
@@ -153,5 +164,9 @@
   button:hover {
     background-color: #369f79;
   }
+  .image-preview {
+    max-width: 50px;
+    margin-top: 10px;
+}
   </style>
   
