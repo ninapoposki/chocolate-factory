@@ -36,12 +36,12 @@ public class ChocolateService {
 	public void init() {
 	    if (ctx.getAttribute("chocolateDAO") == null) {
 	        String contextPath = ctx.getRealPath("");
-	        LocationDAO locationDAO = new LocationDAO(contextPath); // Pretpostavljam da imate LocationDAO
+	        LocationDAO locationDAO = new LocationDAO(contextPath); 
 	        FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO);
-	        factoryDAO.loadFactories(contextPath); // Osiguravamo da se fabrike učitaju
-	        ctx.setAttribute("factoryDAO", factoryDAO); // Čuvamo factoryDAO u kontekstu
+	        factoryDAO.loadFactories(contextPath); 
+	        ctx.setAttribute("factoryDAO", factoryDAO); 
 	        ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath, factoryDAO);
-	        ctx.setAttribute("chocolateDAO", chocolateDAO); // Čuvamo chocolateDAO u kontekstu
+	        ctx.setAttribute("chocolateDAO", chocolateDAO); 
 	    }
 	}
 
@@ -81,18 +81,33 @@ public class ChocolateService {
 	        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
 	        chocolate.setImageUri("slika");
 	        chocolate.setNumberOfChocolates(0); 
-	        chocolate.setIsOnStock(false); 
+	        chocolate.setIsOnStock(false);  //da li fali set is active?
 	        Chocolate savedChocolate = dao.save(chocolate);
 	        return Response.status(Response.Status.CREATED).entity(savedChocolate).build();
 	    }
 	
-	@PUT
+	/*@PUT
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Chocolate updateChocolate(@PathParam("id") String id,Chocolate chocolate) {
         ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
         return dao.updateChocolate(id, chocolate);
-	}
+	}*/
+	 @PUT
+	 @Path("/{id}")
+	 @Produces(MediaType.APPLICATION_JSON)
+	 public Response updateChocolate(@PathParam("id") String id, Chocolate chocolate) {
+	     if (!ChocolateValidator.isValidChocolate(chocolate)) {
+	         return Response.status(Response.Status.BAD_REQUEST)
+	                 .entity("Invalid chocolate data")
+	                 .build();
+	     }
+	     ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
+	     Chocolate updatedChocolate = dao.updateChocolate(id, chocolate);
+	     
+	     return Response.ok(updatedChocolate).build();
+	 }
+
 	
 	@GET
 	@Path("/choco/{id}")
