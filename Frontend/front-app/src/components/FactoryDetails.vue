@@ -159,6 +159,10 @@ th, td {
   padding: 12px 15px;
   text-align: left;
 }
+img {
+    max-width: 50px;
+    max-height: 100px;
+}
 
 th {
   background-color: #f5f5f5;
