@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import beans.Chocolate;
@@ -192,18 +193,39 @@ public class ChocolateDAO {
 	public void deleteChocolate(String id) {
 	    if (chocolates.containsKey(id)) {
 	        Chocolate chocolate = chocolates.get(id);
-	        chocolate.setIsActive(false);  
-	        saveChocolates();  
+	        chocolate.setIsActive(false);
+	        saveChocolates();
 
 	        // Ažuriraj listu čokolada u fabrici ako postoji
 	        if (chocolate.getFactory() != null) {
 	            Collection<Chocolate> factoryChocolates = findChocolatesByFactoryId(String.valueOf(chocolate.getFactoryId()));
 	            factoryChocolates.removeIf(c -> !c.getIsActive()); // Ukloni sve neaktivne čokolade iz liste
-	            // Ažuriraj čokolade u Factory objektu
-	            chocolate.getFactory().setChocolates(new ArrayList<>(factoryChocolates));
+	            
+	            // Ažuriraj čokolade u Factory objektu bez referenci na fabriku
+	            List<Chocolate> updatedChocolates = factoryChocolates.stream()
+	                .map(c -> {
+	                    Chocolate chocoCopy = new Chocolate();
+	                    chocoCopy.setId(c.getId());
+	                    chocoCopy.setChocolateName(c.getChocolateName());
+	                    chocoCopy.setDescription(c.getDescription());
+	                    chocoCopy.setImageUri(c.getImageUri());
+	                    chocoCopy.setNumberOfChocolates(c.getNumberOfChocolates());
+	                    chocoCopy.setPrice(c.getPrice());
+	                    chocoCopy.setType(c.getType());
+	                    chocoCopy.setVariety(c.getVariety());
+	                    chocoCopy.setWeight(c.getWeight());
+	                    chocoCopy.setIsOnStock(c.getIsOnStock());
+	                    chocoCopy.setIsActive(c.getIsActive());
+	                    // Postavi ostale atribute ako je potrebno
+	                    return chocoCopy;
+	                })
+	                .collect(Collectors.toList());
+	            
+	            chocolate.getFactory().setChocolates(updatedChocolates);
 	        }
 	    }
 	}
 
+	
 
 }

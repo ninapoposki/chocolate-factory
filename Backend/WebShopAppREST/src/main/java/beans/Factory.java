@@ -2,9 +2,12 @@ package beans;
 
 import java.util.List;
 
+import javax.json.bind.annotation.JsonbTransient;
+
 public class Factory{
 	private String id;
 	private String factoryName;
+    @JsonbTransient
 	private List<Chocolate> chocolates;
 	private int workingTime;
 	private boolean status; //true-radi,false-ne radi
@@ -42,7 +45,7 @@ public class Factory{
 	public void setFactoryName(String factoryName) {
 		this.factoryName = factoryName;
 	}
-
+    @JsonbTransient
 	public List<Chocolate> getChocolates() {
 		return chocolates;
 	}

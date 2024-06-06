@@ -55,7 +55,7 @@
     numberOfChocolates: 0,
     isOnStock: false
   });
-  const regex = /^[A-Za-z]+$/;
+  const regex = /^\s*[A-Za-z]+(\s+[A-Za-z]+)*\s*$/;
   onMounted(() => {
   const factoryId = route.params.id;
   newChocolate.value.factoryId = factoryId;
@@ -99,7 +99,6 @@
     axios.post('http://localhost:8080/WebShopAppREST/rest/chocolates/', newChocolate.value)
       .then(response => {
         console.log(response.data);
-        // Clear the form after successful submission
         newChocolate.value = {
           chocolateName: "",
           price: 0,
