@@ -12,6 +12,7 @@
                           <th>Working Time</th>
                           <th>Grade</th>
                           <th>Status</th>
+                          <th>Comments</th>
                       </tr>
                   </thead>
                   <tbody>
@@ -22,6 +23,7 @@
                           <td>{{ factory.workingTime }}</td>
                           <td>{{ factory.grade }}</td>
                           <td>{{ factory.isStatus ? 'active' : 'inactive' }}</td>
+                          <td>None</td>
                       </tr>
                   </tbody>
               </table>
