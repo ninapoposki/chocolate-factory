@@ -8,12 +8,15 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import beans.Chocolate;
 import beans.User;
+import dao.ChocolateDAO;
 import dao.UserDAO;
 import dto.RegisteredUserDTO;
 
@@ -38,10 +41,18 @@ public class UserService {
 	public UserService() {
 	}
 	
+	@GET
+	@Path("/")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Collection<User> getUsers() {
+		UserDAO dao=(UserDAO) ctx.getAttribute("userDAO");
+		return dao.findAll();
+	}
+	
 	@POST
     @Path("/register")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response registerUser(RegisteredUserDTO dto) {
+    public Response registerUser(User dto) {
         UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
 
         User user = new User();
@@ -61,6 +72,14 @@ public class UserService {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("User registration failed").build();
         }
     }
-	
+	@GET
+	 @Path("/exists/{username}")
+	    @Produces(MediaType.APPLICATION_JSON)
+	    public Response checkUsernameExists(@PathParam("username") String username) {
+	        UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+	        boolean exists = dao.existsByUsername(username);
+
+	        return Response.ok().entity("{\"exists\": " + exists + "}").build();
+	    }
 
 }

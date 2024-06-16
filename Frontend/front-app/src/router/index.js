@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue';
 import AddChocolate from '../views/AddChocolate.vue';
 import UpdateChocolate from '../views/UpdateChocolateView.vue';
 import FactoryDetails from '@/components/FactoryDetails.vue';
+import RegisterUser from '@/components/RegisterUser.vue';
 const routes = [
   {
     path: "/",
@@ -24,6 +25,11 @@ const routes = [
     path: "/details/:id",
     name: "details",
     component: FactoryDetails,
+  },
+  {
+    path: "/register",
+    name: "register",
+    component: RegisterUser,
   },
   {
     path: "/about",
