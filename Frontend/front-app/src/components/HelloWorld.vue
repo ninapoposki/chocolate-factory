@@ -1,94 +1,120 @@
-
-  <template>
-  <div>
-    <h2>Registration Form</h2>
-    <form @submit.prevent="TryToregisterUser($event)">
+<template>
+  <div class="background">
+    <div class="content">
+  <div class="loginform">
+    <h2>Login Form</h2>
+    <form @submit.prevent="login">
       <div>
         <label for="username">Username:</label>
-        <input type="text" v-model="registerUser.username" required />
+        <input type="text" id="username" name="username" required v-model="user.username" />
       </div>
       <div>
         <label for="password">Password:</label>
-        <input type="password" v-model="registerUser.password" required />
+        <input type="password" id="password" name="password" required v-model="user.password" />
       </div>
-      <div>
-        <label for="firstName">First Name:</label>
-        <input type="text" v-model="registerUser.firstName" required />
-      </div>
-      <div>
-        <label for="lastName">Last Name:</label>
-        <input type="text" v-model="registerUser.lastName" required />
-      </div>
-      <div>
-        <label for="gender">Gender:</label>
-        <select v-model="registerUser.gender" required>
-          <option value="MALE">Male</option>
-          <option value="FEMALE">Female</option>
-        </select>
-      </div>
-      <div>
-        <label for="dateOfBirth">Date of Birth:</label>
-        <input type="date" v-model="registerUser.dateOfBirth" required />
-      </div>
-      <button type="submit">Register</button>
+      <button type="submit" class="login-button">Log in</button>
     </form>
+    <div class="register-link">
+      <a href="#" @click.prevent="registration">Don't have an account? Register here</a>
+    </div>
+    <div class="error-message">
+      {{ errorMessage }}
+    </div>
   </div>
-  <button @click = "addChocolate()"></button>
+</div>
+</div>
 </template>
 
 <script setup>
 import axios from 'axios';
-import { onMounted, ref } from 'vue';
-import {UseRouter} from 'vue-router'
-const users= ref([]);
-const router = UseRouter();
-const registerUser = ref({username: "", password:"", firstName:"", lastName:"", gender:"", dateOfBirth:null});
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-defineProps({
-  msg: {
-    type: String,
-    required: true
-  }
-})
+const user = ref({ username: null, password: null });
+const errorMessage = ref(null);
+const router = useRouter();
 
-onMounted(() => {
-	loadProducts();
-})
-
-function loadProducts() {
-	axios.get('http://localhost:8080/WebShopAppREST/rest/products/')
-		.then(response => {
-			console.log(response.data)
-		})
-    .catch(error => console.log(error));
-}
-function addChocolate(){
-  router.push('/add');
+function registration() {
+  router.push('/register');
 }
 
-function TryToregisterUser(event){
-  axios.post('http://localhost:8080/WebShopAppREST/rest/users/register', registerUser.value)
-		.then(response => {
-			console.log(response.data)
-		})
-    .catch(error => console.log(error));
+function login() {
+  event.preventDefault();
+
+  axios.get('rest/users')
+    .then(response => {
+      const users = response.data;
+      let foundUser = users.find(u => u.username === user.value.username);
+
+      if (foundUser && foundUser.blocked === true) {
+        errorMessage.value = "You were blocked by administrator!";
+        return;
+      }
+
+      if (!user.value.username && !user.value.password) {
+        errorMessage.value = "Please enter your username and password";
+      } else if (!user.value.username) {
+        errorMessage.value = "Please enter your username";
+      } else if (!user.value.password) {
+        errorMessage.value = "Please enter your password";
+      } else if (!foundUser) {
+        errorMessage.value = "User with the entered username does not exist";
+        user.value.username = "";
+        user.value.password = "";
+      } else if (foundUser.password !== user.value.password) {
+        errorMessage.value = "Incorrect password";
+        user.value.password = "";
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    });
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
+.loginform {
+  margin-bottom: 700px;
 }
-ul {
-  list-style-type: none;
-  padding: 0;
+
+.error-message {
+  color: red;
 }
-li {
-  display: inline-block;
-  margin: 0 10px;
+.background {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
-a {
-  color: #42b983;
+
+.background::before {
+  content: "";
+  background-image: url('https://cdn2.hauteliving.com/wp-content/uploads/2014/08/macarons.gif');
+  background-size: cover;
+  opacity: 0.5; 
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
 }
+
+.content {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 400px;
+  width: 100%;
+  opacity: 1;
+  height: 350px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 200px;
+}
+.login-button {
+  width: 80px; 
+  margin: 10px auto; 
+}
+
 </style>
