@@ -12,18 +12,20 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
+
+
 import beans.Factory;
 import beans.Location;
 
 public class FactoryDAO {
+	
+	private HashMap<String, Factory> factories = new HashMap<String, Factory>();
+	private LocationDAO locationDAO;  // Dodajte referencu na LocationDAO
 
-    private HashMap<String, Factory> factories = new HashMap<String, Factory>();
-    private LocationDAO locationDAO;
-    private String contextPath;
-
-    public FactoryDAO() {
-        
-    }
+	private String contextPath;
+	public FactoryDAO() {
+		
+	}
 
     public FactoryDAO(String contextPath, LocationDAO locationDAO) {
         this.contextPath = contextPath;

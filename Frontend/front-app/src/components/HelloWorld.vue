@@ -12,14 +12,15 @@
         <label for="password">Password:</label>
         <input type="password" id="password" name="password" required v-model="user.password" />
       </div>
+      <div class="error-message">
+      {{ errorMessage }}
+    </div>
       <button type="submit" class="login-button">Log in</button>
     </form>
     <div class="register-link">
       <a href="#" @click.prevent="registration">Don't have an account? Register here</a>
     </div>
-    <div class="error-message">
-      {{ errorMessage }}
-    </div>
+    
   </div>
 </div>
 </div>
@@ -38,36 +39,40 @@ function registration() {
   router.push('/register');
 }
 
+
 function login() {
-  event.preventDefault();
+  errorMessage.value = null;
 
-  axios.get('rest/users')
-    .then(response => {
-      const users = response.data;
-      let foundUser = users.find(u => u.username === user.value.username);
-
-      if (foundUser && foundUser.blocked === true) {
-        errorMessage.value = "You were blocked by administrator!";
-        return;
-      }
-
-      if (!user.value.username && !user.value.password) {
-        errorMessage.value = "Please enter your username and password";
-      } else if (!user.value.username) {
-        errorMessage.value = "Please enter your username";
-      } else if (!user.value.password) {
-        errorMessage.value = "Please enter your password";
-      } else if (!foundUser) {
-        errorMessage.value = "User with the entered username does not exist";
-        user.value.username = "";
-        user.value.password = "";
-      } else if (foundUser.password !== user.value.password) {
-        errorMessage.value = "Incorrect password";
-        user.value.password = "";
+  axios.post('http://localhost:8080/WebShopAppREST/rest/users/login', user.value)
+  .then(response => {
+      console.log(response.data);
+      if (response.status === 200) {
+        errorMessage.value = "You successfully logged in.";
+        alert('You successfully logged in.');
+        console.log('Response:', response);
+        
+        const userId = response.data.id; 
+        console.log(userId);
+        localStorage.setItem('userId', userId);
+        router.push('/profile');
+        
       }
     })
     .catch(error => {
-      console.log(error);
+      if (error.response && error.response.data.message) {
+        if (error.response.data.message === "Invalid password") {
+          errorMessage.value = "Invalid password.";
+        } else if (error.response.data.message === "User not found") {
+          errorMessage.value = "User with this username does not exist.";
+        } else if (error.response.status === 403) {
+          errorMessage.value = "Blokirani ste od strane administratora!";
+        } else {
+          errorMessage.value = "Došlo je do greške. Pokušajte ponovo.";
+        }
+      } else {
+        errorMessage.value = "Došlo je do greške. Pokušajte ponovo.";
+      }
+      console.error(error);
     });
 }
 </script>

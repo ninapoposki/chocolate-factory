@@ -39,6 +39,14 @@ public class UserDAO {
     public User findUser(String id) {
         return users.containsKey(id) ? users.get(id) : null;
     }
+    public User findByUsername(String username) {
+        for (User user : users.values()) {
+            if (user.getUsername().equalsIgnoreCase(username)) {
+                return user;
+            }
+        }
+        return null;
+    }
 
     public User updateUser(String id, User user) {
         User u = users.containsKey(id) ? users.get(id) : null;
@@ -168,6 +176,16 @@ public class UserDAO {
         }
         return false;
     }
+    
+    public boolean validateUser(String username, String password) {
+        for (User user : users.values()) {
+            if (user.getUsername().equalsIgnoreCase(username) && user.getPassword().equals(password)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 }
 

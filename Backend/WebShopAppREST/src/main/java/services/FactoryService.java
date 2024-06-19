@@ -57,7 +57,6 @@ public class FactoryService {
 		return dao.findFactory(id);
 	}
 	
-	
 	@GET
 	@Path("/search")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -132,5 +131,4 @@ public class FactoryService {
 
 
 
-	
 }

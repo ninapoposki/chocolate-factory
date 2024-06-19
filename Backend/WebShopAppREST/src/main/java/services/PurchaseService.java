@@ -18,6 +18,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import beans.Chocolate;
+import beans.Purchase;
+import dao.PurchaseDAO;
+import enumerations.PurchaseStatus;
 import dao.ChocolateDAO;
 import dao.FactoryDAO;
 import dao.LocationDAO;
@@ -25,77 +28,63 @@ import javax.annotation.PostConstruct;// ova dva
 import javax.json.bind.annotation.JsonbTransient;
 import validations.ChocolateValidator;
 
-@Path("/chocolates")
-public class ChocolateService {
+@Path("/purchases")
+public class PurchaseService {
 	@Context
 	ServletContext ctx;
 	
-	public ChocolateService() {
+	public PurchaseService() {
 	}
 	
 	@PostConstruct
 	public void init() {
-	    if (ctx.getAttribute("chocolateDAO") == null) {
+	    if (ctx.getAttribute("purchaseDAO") == null) {
 	        String contextPath = ctx.getRealPath("");
 	        LocationDAO locationDAO = new LocationDAO(contextPath); 
 	        FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO);
+	        ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath, factoryDAO);
 	        factoryDAO.loadFactories(contextPath); 
 	        ctx.setAttribute("factoryDAO", factoryDAO); 
-	        ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath, factoryDAO);
-	        ctx.setAttribute("chocolateDAO", chocolateDAO); 
+	        PurchaseDAO purchaseDAO = new PurchaseDAO(contextPath, factoryDAO, chocolateDAO);
+	        ctx.setAttribute("purchaseDAO", purchaseDAO); 
 	    }
 	}
 
+	@GET
+	@Path("/user/{userId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Collection<Purchase> getByUserId(@PathParam("userId") int userId) {
+	    PurchaseDAO dao = (PurchaseDAO) ctx.getAttribute("purchaseDAO");
+	    return dao.findByCustomerId(userId);
+	}
 	
 	@GET
 	@Path("/")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Collection<Chocolate> getProducts() {
-		ChocolateDAO dao=(ChocolateDAO) ctx.getAttribute("chocolateDAO");
+	public Collection<Purchase> getPurchases() {
+		PurchaseDAO dao=(PurchaseDAO) ctx.getAttribute("purchaseDAO");
 		return dao.findAll();
 	}
 	
-	/*@POST
-    @Path("/")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response createChocolate(Chocolate chocolate) {
-        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
-        chocolate.setImageUri("slika");
-        chocolate.setNumberOfChocolates(0); 
-        chocolate.setIsOnStock(false); 
-        chocolate.setIsActive(true);
-        Chocolate savedChocolate = dao.save(chocolate);
-        return Response.status(Response.Status.CREATED).entity(savedChocolate).build();
-    }*/
+	
 	 @POST
 	    @Path("/")
 	    @Consumes(MediaType.APPLICATION_JSON)
 	    @Produces(MediaType.APPLICATION_JSON)
-	    public Response createChocolate(Chocolate chocolate) {
-	        if (!ChocolateValidator.isValidChocolate(chocolate)) {
+	    public Response createPurchase(Purchase purchase) {
+	        /*if (!ChocolateValidator.isValidChocolate(chocolate)) {
 	            return Response.status(Response.Status.BAD_REQUEST)
 	                           .entity("Invalid chocolate data")
 	                           .build();
-	        }
+	        }*/
 
-	        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
-	        //chocolate.setImageUri("slika");
-	        chocolate.setIsOnStock(false);  //da li fali set is active?     
-	        chocolate.setNumberOfChocolates(0); 
-	        chocolate.setIsActive(true);
-	        Chocolate savedChocolate = dao.save(chocolate);
-	        return Response.status(Response.Status.CREATED).entity(savedChocolate).build();
+	        PurchaseDAO dao = (PurchaseDAO) ctx.getAttribute("purchaseDAO");
+	        purchase.setStatus(PurchaseStatus.PROCESSING);
+	        Purchase savedPurchase = dao.save(purchase);
+	        return Response.status(Response.Status.CREATED).entity(savedPurchase).build();
 	    }
 	
-	/*@PUT
-	@Path("/{id}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Chocolate updateChocolate(@PathParam("id") String id,Chocolate chocolate) {
-        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
-        return dao.updateChocolate(id, chocolate);
-	}*/
-	 //probicaaaaaaaaaaaaa
+	/*
 	 @PUT
 	 @Path("/{id}")
 	 @Produces(MediaType.APPLICATION_JSON)
@@ -135,5 +124,5 @@ public class ChocolateService {
 	     ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
 	     dao.deleteChocolate(id);
 	 }
-
+*/
 }
