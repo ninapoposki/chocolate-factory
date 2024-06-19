@@ -11,6 +11,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import beans.Factory;
 import dao.FactoryDAO;
@@ -48,4 +49,6 @@ public class FactoryService {
 		FactoryDAO dao=(FactoryDAO) ctx.getAttribute("factoryDAO");
 		return dao.findFactory(id);
 	}
+	
+	
 }

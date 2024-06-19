@@ -3,20 +3,26 @@ package dao;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.core.Response;
+
 import beans.Factory;
 import beans.Location;
+import beans.Chocolate;
+import dao.ChocolateDAO;
 
 public class FactoryDAO {
 	
 	private HashMap<String, Factory> factories = new HashMap<String, Factory>();
 	private LocationDAO locationDAO;  // Dodajte referencu na LocationDAO
-
+	private ChocolateDAO chocolateDAO;
 	public FactoryDAO() {
 		
 	}
@@ -24,6 +30,7 @@ public class FactoryDAO {
 	public FactoryDAO(String contextPath, LocationDAO locationDAO) {
 	     this.locationDAO = locationDAO; 
 	     this.locationDAO.loadLocations(contextPath);
+	     this.chocolateDAO  =chocolateDAO;
 	     loadFactories(contextPath);
 	    
 	}
@@ -109,7 +116,6 @@ public class FactoryDAO {
 	            .sorted(Comparator.comparing(Factory::getId))  // Zatim sortiranje po ID-u
 	            .collect(Collectors.toList());
 	}
-
 
 	
 }

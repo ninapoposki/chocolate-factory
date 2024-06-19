@@ -31,6 +31,10 @@
 
 <script>
 import axios from 'axios';
+import { useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
+const router = useRouter();
+const route = useRoute();
 
 export default {
   data() {

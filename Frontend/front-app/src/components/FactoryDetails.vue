@@ -56,7 +56,7 @@
                           <td>{{ chocolate.description }}</td>
                           <td><img :src="chocolate.imageUri" alt="Chocolate Image" class="logo" /></td>
                           <td class="buttons">
-                              <button @click="updateChocolate(chocolate)">Change chocolate</button>
+                              <button  v-if="userRole === 'ADMINISTRATOR'" @click="updateChocolate(chocolate)">Change chocolate</button>
                               <button class="small-button" @click="deleteChocolate(chocolate.id)">Delete chocolate</button>
                           </td>
                       </tr>
@@ -79,8 +79,24 @@ const router = useRouter();
 const route = useRoute();
 const factory = ref(null);
 const chocolates = ref([]);
+const userRole = ref('');
 
 onMounted(() => {
+  
+  const userId = getUserIdFromLocalStorage();
+  console.log(userId);
+  
+  // Dobijanje trenutnog korisnika
+  axios.get(`http://localhost:8080/WebShopAppREST/rest/users/${userId}`)
+    .then(response => {
+      userRole.value = response.data.role;
+    })
+    .catch(error => {
+      console.error('Error fetching user details', error);
+    });
+
+
+
   const id = route.params.id;
   axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/${id}`)
       .then(response => {
@@ -111,7 +127,10 @@ function deleteChocolate(chocolateId) {
           alert('Failed to delete chocolate');
       });
 }
-
+const getUserIdFromLocalStorage = () => {
+ return localStorage.getItem('userId');
+ 
+};
 defineExpose({ updateChocolate });
 </script>
 

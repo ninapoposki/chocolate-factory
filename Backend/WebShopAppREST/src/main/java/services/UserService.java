@@ -7,6 +7,7 @@ import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -21,6 +22,7 @@ import dao.UserDAO;
 import dto.RegisteredUserDTO;
 
 import enumerations.Role;
+import validations.ChocolateValidator;
 import validations.PasswordValidation;
 import validations.PersonalDataValidation;
 
@@ -82,4 +84,47 @@ public class UserService {
 	        return Response.ok().entity("{\"exists\": " + exists + "}").build();
 	    }
 
+	@POST
+	@Path("/login")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response loginUser(User loginUser) {
+	    UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+
+	    String username = loginUser.getUsername();
+	    String password = loginUser.getPassword();
+
+	    if (dao.existsByUsername(username)) {
+	        boolean validUser = dao.validateUser(username, password);
+	        if (validUser) {
+	        	User user = dao.findByUsername(username);
+	            return Response.ok().entity(user).build();
+	           // return Response.ok().entity("{\"message\": \"Login successful\"}").build();
+	        } else {
+	            return Response.status(Response.Status.UNAUTHORIZED).entity("{\"message\": \"Invalid password\"}").build();
+	        }
+	    } else {
+	        return Response.status(Response.Status.NOT_FOUND).entity("{\"message\": \"User not found\"}").build();
+	    }
+	}
+
+	@GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public User findUserById(@PathParam("id") String id) {
+        UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+        
+        return dao.findUser(id);
+    }
+	
+	@PUT
+	 @Path("/update/{id}")
+	 @Produces(MediaType.APPLICATION_JSON)
+	public Response updateUser(@PathParam("id") String id, User user) {
+	     
+	     UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+	     User updatedUser = dao.updateUser(id, user);
+	     
+	     return Response.ok(updatedUser).build();
+	 }
 }

@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import beans.Chocolate;
 import beans.Factory;
-
+import beans.Chocolate;
 public class ChocolateDAO {
 	
 	private HashMap<String, Chocolate> chocolates = new HashMap<String, Chocolate>();
@@ -28,7 +28,8 @@ public class ChocolateDAO {
 	
 	public ChocolateDAO(String contextPath,FactoryDAO factoryDAO) {
 		this.contextPath = contextPath;
-		this.factoryDAO = factoryDAO; 
+		this.factoryDAO = factoryDAO;
+		
 	    this.factoryDAO.loadFactories(contextPath);
 		loadChocolates(contextPath);
 
@@ -143,7 +144,7 @@ public class ChocolateDAO {
         }
     }
 
-	private void loadChocolates(String contextPath) {
+	public void loadChocolates(String contextPath) {
 	    BufferedReader in = null;
 	    try {
 	        File file = new File(contextPath + "/chocolates.csv");
