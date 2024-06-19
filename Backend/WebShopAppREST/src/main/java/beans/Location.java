@@ -8,12 +8,12 @@ public class Location{
 	private String streetNumber;
 	private String city;
 	private String postalCode;
-	
+	private String country;
 	
 	public Location() {
 		
 	}
-	public Location(String id,double width, double height, String street, String streetNumber, String city, String postalCode) {
+	public Location(String id,double width, double height, String street, String streetNumber, String city, String postalCode,String country) {
 		super();
 		this.id=id;
 		this.width = width;
@@ -22,6 +22,7 @@ public class Location{
 		this.streetNumber = streetNumber;
 		this.city = city;
 		this.postalCode = postalCode;
+		this.country=country;
 	}
 	
 	
@@ -67,8 +68,12 @@ public class Location{
 	public void setPostalCode(String postalCode) {
 		this.postalCode = postalCode;
 	}
+	public String getCountry() {
+		return country;
+	}
+	public void setCountry(String country) {
+		this.country = country;
+	}
 	
-	
-
 	
 }
