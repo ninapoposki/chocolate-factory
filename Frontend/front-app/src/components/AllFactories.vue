@@ -4,10 +4,12 @@
       <h1 class="title">FACTORIES</h1>
       <div class="search-bar">
         <input type="text" v-model="searchQuery" placeholder="Search factories..." />
-        <div class="search_buttons">
+        <div class="search-buttons">
           <button @click="searchFactories">Search</button>
-          <button @click="resetFactories">Reset</button>
+          <button class="reset-button" @click="resetFactories">Reset</button>
         </div>
+      </div>
+      <div class="filters">
         <div class="sort-bar">
           <label for="sortBy">Sort By:</label>
           <select v-model="sortBy" id="sortBy">
@@ -17,32 +19,29 @@
           </select>
           <label for="order">Order:</label>
           <select v-model="ascending" id="order">
-            <option :value="true">Rastuće</option>
-            <option :value="false">Opadajuće</option>
+            <option :value="true">Ascending</option>
+            <option :value="false">Descending</option>
           </select>
           <button @click="sortFactories">Sort</button>
         </div>
         <div class="filter-bar">
-          <!-- ovo posle zameni sa pravim podacima -->
           <label for="chocolateType">Chocolate Type:</label>
-          <select v-model="chocolateType" id="chocolateType">
+          <select v-model="chocolateType" id="chocolateType" class="narrow-select">
             <option value="">All</option>
-            <option value="Milk">Milk</option>
-            <option value="Dark">Dark</option>
-            <option value="White">White</option>
+            <option v-for="type in chocolateTypes" :key="type" :value="type">{{ type }}</option>
           </select>
-          <!-- ovo posle promeni sa podacima pravim  -->
           <label for="chocolateKind">Chocolate Kind:</label>
           <select v-model="chocolateKind" id="chocolateKind">
             <option value="">All</option>
-            <option value="Bar">Bar</option>
-            <option value="Truffle">Truffle</option>
-            <option value="Bonbon">Bonbon</option>
+            <option v-for="kind in chocolateVarieties" :key="kind" :value="kind">{{ kind }}</option>
           </select>
           <label for="openOnly">Open Only:</label>
           <input type="checkbox" v-model="openOnly" id="openOnly">
           <button @click="filterFactories">Filter</button>
         </div>
+      </div>
+      <div v-if="userRole === 'ADMINISTRATOR'" class="add-button">
+        <button @click="addNewFactory">Add new</button>
       </div>
       <div class="tables">
         <table class="table-container">
@@ -59,21 +58,20 @@
             <tr v-for="factory in factories" :key="factory.id">
               <td><img :src="factory.logoUri" alt="Factory Logo" class="logo" /></td>
               <td>{{ factory.factoryName }}</td>
-              <!-- <td>{{ factory.location.street }} {{ factory.location.streetNumber }}, {{ factory.location.city }} {{ factory.location.postalCode }}</td> -->
               <td>
-            <div class="location-info">
-              <div class="address">
-                <p>{{ factory.location.street }} {{ factory.location.streetNumber }}</p>
-                <p>{{ factory.location.city }} {{ factory.location.postalCode }}</p>
-                <p>{{ factory.location.height }}, {{ factory.location.width }}</p>
-              </div>
-              <map-component :initialCoordinates="[factory.location.width, factory.location.height]" :small="true"></map-component>
-            </div>
-          </td>
+                <div class="location-info">
+                  <factory-map :initialCoordinates="[factory.location.width, factory.location.height]" :small="true"></factory-map>
+                  <div class="address">
+                    <p>{{ factory.location.street }} {{ factory.location.streetNumber }}</p>
+                    <p>{{ factory.location.city }} {{ factory.location.postalCode }}</p>
+                    <p>{{ factory.location.height }}, {{ factory.location.width }}</p>
+                  </div>
+                </div>
+              </td>
               <td>{{ factory.grade }}</td>
               <td class="buttons">
                 <button @click="ShowDetails(factory.id)">Show details</button>
-                <button class="small-button" @click="AddNewChocolate(factory.id)">Add chocolate</button>
+                <button  v-if="userRole === 'MANAGER'" class="small-button" @click="AddNewChocolate(factory.id)">Add chocolate</button>
               </td>
             </tr>
           </tbody>
@@ -83,34 +81,38 @@
   </div>
 </template>
 
-
 <script>
 import axios from 'axios';
-import { useRouter } from 'vue-router';
-import { useRoute } from 'vue-router';
-const router = useRouter();
-const route = useRoute();
+import FactoryMap from '@/components/FactoryMap.vue';
 
 export default {
+  components: {
+    FactoryMap
+  },
   data() {
     return {
       searchQuery: '',
       factories: [],
-      sortBy: 'naziv fabrike',
-      ascending: true,
+      sortBy: '',
+      ascending: null,
       chocolateType: '',
       chocolateKind: '',
-      openOnly: false
+      openOnly: false,
+      userRole: '', 
+      chocolateTypes: [], 
+      chocolateVarieties: []
     };
   },
   created() {
     this.fetchFactories();
+    this.fetchChocolateTypes();
+    this.fetchChocolateVarieties();
+    this.getUserRole(); 
   },
   methods: {
     fetchFactories() {
       axios.get('http://localhost:8080/WebShopAppREST/rest/factories')
         .then(response => {
-          console.log(response);
           this.factories = response.data.sort((a, b) => {
             if (a.isStatus === b.isStatus) {
               return a.id - b.id;
@@ -122,14 +124,43 @@ export default {
           console.error('Error fetching factories', error);
         });
     },
+    fetchChocolateTypes() {
+      axios.get('http://localhost:8080/WebShopAppREST/rest/chocolates/types')
+        .then(response => {
+          this.chocolateTypes = response.data;
+        })
+        .catch(error => {
+          console.error('Error fetching chocolate types', error);
+        });
+    },
+    fetchChocolateVarieties() {
+      axios.get('http://localhost:8080/WebShopAppREST/rest/chocolates/varieties')
+        .then(response => {
+          this.chocolateVarieties = response.data;
+        })
+        .catch(error => {
+          console.error('Error fetching chocolate varieties', error);
+        });
+    },
+    getUserRole() {
+      const userId = this.getUserIdFromLocalStorage();
+      axios.get(`http://localhost:8080/WebShopAppREST/rest/users/${userId}`)
+        .then(response => {
+          this.userRole = response.data.role;
+        })
+        .catch(error => {
+          console.error('Error fetching user role', error);
+        });
+    },
+    getUserIdFromLocalStorage() {
+      return localStorage.getItem('userId');
+    },
     searchFactories() {
       axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/search?search=${this.searchQuery}`)
         .then(response => {
-          console.log(response);
           if (response.data.length > 0) {
             this.factories = response.data;
           } else {
-            console.log('No matching factories found.');
             this.factories = [];
           }
         })
@@ -140,7 +171,6 @@ export default {
     sortFactories() {
       axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/sort?sortBy=${this.sortBy}&ascending=${this.ascending}`)
         .then(response => {
-          console.log(response);
           this.factories = response.data;
         })
         .catch(error => {
@@ -148,15 +178,20 @@ export default {
         });
     },
     filterFactories() {
+      console.log("Filtering with params:", {
+    chocolateType: this.chocolateType,
+    chocolateKind: this.chocolateKind,
+    openOnly: this.openOnly
+  });
+
       axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/filter`, {
         params: {
           chocolateType: this.chocolateType,
-          chocolateKind: this.chocolateKind,
+          chocolateVariety: this.chocolateKind, 
           openOnly: this.openOnly
         }
       })
       .then(response => {
-        console.log(response);
         this.factories = response.data;
       })
       .catch(error => {
@@ -165,22 +200,24 @@ export default {
     },
     resetFactories() {
       this.fetchFactories();
-      this.sortBy="";
-      this.ascending=null;
-      this.searchQuery="";
-      this.chocolateType="";
-      this.chocolateKind="";
-      this.openOnly="";
+      this.sortBy = '';
+      this.ascending = null;
+      this.searchQuery = '';
+      this.chocolateType = '';
+      this.chocolateKind = '';
+      this.openOnly = '';
     },
     ShowDetails(id) {
       this.$router.push(`/details/${id}`);
     },
     AddNewChocolate(id) {
       this.$router.push(`/add/${id}`);
+    },
+    addNewFactory() {
+      this.$router.push({ name: 'addF' }); 
     }
   }
-}
-
+};
 </script>
 
 <style scoped>
@@ -212,25 +249,49 @@ export default {
 .search-bar button:hover {
   background-color: #36a372;
 }
+.add-button {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.add-button button {
+  padding: 10px 20px;
+  background-color: rosybrown;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.add-button button:hover {
+  background-color: #36a372;
+}
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
 body {
   font-family: 'Roboto', sans-serif;
+  height: 100vh; 
+  margin: 0; 
 }
 
 .background {
   position: relative;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden; 
 }
 
 .background::before {
   content: "";
   background-image: url('https://cdn2.hauteliving.com/wp-content/uploads/2014/08/macarons.gif');
   background-size: cover;
+  background-position: center; /* Center the background image */
   opacity: 0.5;
   position: absolute;
   top: 0;
@@ -247,9 +308,10 @@ body {
   max-width: 80%;
   width: 100%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin: auto; /* centriranje */
+  margin: auto; 
 }
-.search-bar{
+
+.search-bar {
   margin-right: 10px;
 }
 
@@ -268,6 +330,38 @@ body {
   color: #333;
 }
 
+.filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-right: 290px;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.sort-bar,
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.narrow-select {
+  width: 100px; 
+}
+
+
+.sort-bar {
+  flex: 1;
+  justify-content: flex-start; 
+  margin-right: 30px;
+}
+
+.filter-bar {
+  flex: 2;
+  justify-content: flex-end;
+}
+
 .tables {
   width: 100%;
   display: flex;
@@ -277,28 +371,26 @@ body {
 .table-container {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
+  margin-top: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;
   margin-right: 100px;
-  border: 3px solid #42b983; /* Zeleni okvir */
-
 }
+
 .location-info {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: center; 
 }
 
 .address {
-  text-align: center;
-  margin-bottom: 10px;
+  text-align: left; 
+  margin-left: 10px; 
 }
 
 .map {
-  width: 200px;
-  height: 150px;
+  width: 150px;
+  height: 100px;
   border: 1px solid #ddd;
 }
 
@@ -309,8 +401,8 @@ th, td {
 }
 
 th.no-header {
-  border: none; /* uklanja granicu */
-  background-color: transparent; /* uklanja pozadinu */
+  border: none; 
+  background-color: transparent; 
 }
 
 th {
@@ -333,13 +425,12 @@ td {
 
 .buttons {
   display: flex;
-  flex-direction: column; /* Da dugmad budu jedno ispod drugog */
+  flex-direction: column; 
   gap: 10px;
-  justify-content: center; /* Centriranje dugmadi */
-  align-items: center; /* Centriranje dugmadi */
+  justify-content: center; 
+  align-items: center; 
   border: none;
-  background-color: transparent; /* Transparentna pozadina */
-
+  background-color: transparent; 
 }
 
 button {
@@ -350,7 +441,7 @@ button {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s;
-  width: 120px; /* Širina dugmadi */
+  width: 120px; 
 }
 
 button:hover {
@@ -359,11 +450,18 @@ button:hover {
 
 .small-button {
   padding: 5px 8px;
-  width: 120px; /* Širina dugmadi */
+  width: 120px; 
 }
 
-.search_buttons {
+.search-buttons {
   display: flex;
-  gap: 10px; /* Podesite razmak između dugmića */
+  gap: 20px; 
+}
+.filters input,
+.filters select,
+.filters button {
+  border: 2px solid #42b983; 
+  border-radius: 4px;
+  padding: 10px;
 }
 </style>

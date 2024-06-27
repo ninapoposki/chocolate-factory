@@ -15,12 +15,17 @@ public class Factory{
 	//idLocation?
 	private String logoUri;
 	private double grade;
+	//private String managerId;
+	private User user;
+	private List<User> employees;
 	
+	
+
 	public Factory() {
 		
 	}
 
-	 public Factory(String id, String factoryName, int workingTime, boolean status, String logoUri, double grade, Location location) {
+	 public Factory(String id, String factoryName, int workingTime, boolean status, String logoUri, double grade, Location location,User user) {
 	        this.id = id;
 	        this.factoryName = factoryName;
 	        this.workingTime = workingTime;
@@ -28,8 +33,25 @@ public class Factory{
 	        this.logoUri = logoUri;
 	        this.grade = grade;
 	        this.location = location; // Setovanje lokacije direktno u konstruktoru
+	        this.user=user;
 	    }
+	 
+	 
 
+//	public String getManagerId() {
+//		return managerId;
+//	}
+//
+//	public void setManagerId(String managerId) {
+//		this.managerId = managerId;
+//	}
+	public List<User> getEmployees() {
+		return employees;
+	}
+
+	public void setEmployees(List<User> employees) {
+		this.employees = employees;
+	}
 	public String getId() {
 		return id;
 	}
@@ -70,6 +92,12 @@ public class Factory{
 		this.status = status;
 	}
 
+	public User getUser() {
+		return user;
+	}
+	public void setUser(User user) {
+		this.user=user;
+	}
 	public Location getLocation() {
 		return location;
 	}

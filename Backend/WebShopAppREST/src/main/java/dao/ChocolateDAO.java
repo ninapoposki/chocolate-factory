@@ -11,11 +11,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import beans.Chocolate;
 import beans.Factory;
-import beans.Chocolate;
+
 public class ChocolateDAO {
 	
 	private HashMap<String, Chocolate> chocolates = new HashMap<String, Chocolate>();
@@ -26,14 +27,29 @@ public class ChocolateDAO {
 		
 	}
 	
-	public ChocolateDAO(String contextPath,FactoryDAO factoryDAO) {
-		this.contextPath = contextPath;
-		this.factoryDAO = factoryDAO;
-		
-	    this.factoryDAO.loadFactories(contextPath);
-		loadChocolates(contextPath);
+//	public ChocolateDAO(String contextPath,FactoryDAO factoryDAO) {
+//		this.contextPath = contextPath;
+//		this.factoryDAO = factoryDAO;
+//		
+//	    this.factoryDAO.loadFactories(contextPath);
+//		loadChocolates(contextPath);
+//
+//	}
+	// Postojeći konstruktor
+    public ChocolateDAO(String contextPath) {
+        this.contextPath = contextPath;
+    }
 
-	}
+    // Novi konstruktor koji prihvata FactoryDAO
+    public ChocolateDAO(String contextPath, FactoryDAO factoryDAO) {
+        this.contextPath = contextPath;
+        this.factoryDAO = factoryDAO;
+    }
+
+    // Dodajte setter za FactoryDAO
+    public void setFactoryDAO(FactoryDAO factoryDAO) {
+        this.factoryDAO = factoryDAO;
+    }
 
 	public Collection<Chocolate> findAll() {
 		return chocolates.values();
@@ -242,6 +258,19 @@ public class ChocolateDAO {
 	            chocolate.getFactory().setChocolates(updatedChocolates);
 	        }
 	    }
+	}
+	
+	//SET-osigura da su vrednosti jedinstvene-da se ne dupliraju vrste,zato ne koristim list
+	public Set<String> getAllChocolateTypes() {
+	    return chocolates.values().stream()
+	            .map(Chocolate::getType)
+	            .collect(Collectors.toSet());
+	}
+
+	public Set<String> getAllChocolateVarieties() {
+	    return chocolates.values().stream()
+	            .map(Chocolate::getVariety)
+	            .collect(Collectors.toSet());
 	}
 
 	
