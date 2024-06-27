@@ -16,7 +16,7 @@ public class User {
 	private Gender gender;
 	private LocalDate dateOfBirth;
 	private Role role;
-	
+
 	
 	public User() {
 		super();
@@ -35,7 +35,6 @@ public class User {
 		this.dateOfBirth = dateOfBirth;
 		this.role = role;
 	}
-	
 
 
 	public String getId() {

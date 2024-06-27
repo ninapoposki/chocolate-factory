@@ -19,7 +19,9 @@ import javax.ws.rs.core.Response;
 
 import beans.Chocolate;
 import beans.Purchase;
+import beans.ShoppingCart;
 import dao.PurchaseDAO;
+import dao.ShoppingCartDAO;
 import enumerations.PurchaseStatus;
 import dao.ChocolateDAO;
 import dao.FactoryDAO;
@@ -44,8 +46,9 @@ public class PurchaseService {
 	        FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO);
 	        ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath, factoryDAO);
 	        factoryDAO.loadFactories(contextPath); 
-	        ctx.setAttribute("factoryDAO", factoryDAO); 
-	        PurchaseDAO purchaseDAO = new PurchaseDAO(contextPath, factoryDAO, chocolateDAO);
+	        ctx.setAttribute("factoryDAO", factoryDAO);
+	        ShoppingCartDAO shoppingCartDAO = new ShoppingCartDAO(contextPath, chocolateDAO);
+	        PurchaseDAO purchaseDAO = new PurchaseDAO(contextPath, factoryDAO, chocolateDAO, shoppingCartDAO);
 	        ctx.setAttribute("purchaseDAO", purchaseDAO); 
 	    }
 	}
@@ -72,57 +75,27 @@ public class PurchaseService {
 	    @Consumes(MediaType.APPLICATION_JSON)
 	    @Produces(MediaType.APPLICATION_JSON)
 	    public Response createPurchase(Purchase purchase) {
-	        /*if (!ChocolateValidator.isValidChocolate(chocolate)) {
-	            return Response.status(Response.Status.BAD_REQUEST)
-	                           .entity("Invalid chocolate data")
-	                           .build();
-	        }*/
+	       
 
 	        PurchaseDAO dao = (PurchaseDAO) ctx.getAttribute("purchaseDAO");
+	        
+	        ShoppingCartDAO shoppingCartDAO = (ShoppingCartDAO) ctx.getAttribute("shoppingCartDAO");
+
+	        // Preuzimanje ShoppingCart objekta na osnovu customer ID iz Purchase objekta
+	        Collection<ShoppingCart> shoppingCarts = shoppingCartDAO.findByCustomerId(purchase.getCustomerId());
+
+	        for (ShoppingCart shoppingCart : shoppingCarts) {
+	            // Ažuriranje state polja na true u ShoppingCart objektu
+	            shoppingCart.setState(false); // Postavljanje state na true
+
+	            // Čuvanje ažuriranog ShoppingCart objekta
+	            shoppingCartDAO.updateShoppingCart(shoppingCart.getId(), shoppingCart);
+	        }
+	        
 	        purchase.setStatus(PurchaseStatus.PROCESSING);
 	        Purchase savedPurchase = dao.save(purchase);
 	        return Response.status(Response.Status.CREATED).entity(savedPurchase).build();
 	    }
 	
-	/*
-	 @PUT
-	 @Path("/{id}")
-	 @Produces(MediaType.APPLICATION_JSON)
-	 public Response updateChocolate(@PathParam("id") String id, Chocolate chocolate) {
-	     if (!ChocolateValidator.isValidChocolate(chocolate)) {
-	         return Response.status(Response.Status.BAD_REQUEST)
-	                 .entity("Invalid chocolate data")
-	                 .build();
-	     }
-	     ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
-	     Chocolate updatedChocolate = dao.updateChocolate(id, chocolate);
-	     
-	     return Response.ok(updatedChocolate).build();
-	 }
 
-	
-	@GET
-	@Path("/choco/{id}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Chocolate getById(@PathParam("id") String id) {
-        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
-        return dao.findChocolates(id);
-	}
-
-	 @GET
-	 @Path("/{id}")
-	 @Produces(MediaType.APPLICATION_JSON)
-	 public Collection<Chocolate> getChocolatesByFactoryId(@PathParam("id") String factoryId) {
-	        ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
-	        return dao.findChocolatesByFactoryId(factoryId);
-	  }
-	 
-	 @DELETE
-	 @Path("/{id}")
-	 @Produces(MediaType.APPLICATION_JSON)
-	 public void deleteChocolate(@PathParam("id") String id) {
-	     ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
-	     dao.deleteChocolate(id);
-	 }
-*/
 }

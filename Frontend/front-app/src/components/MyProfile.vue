@@ -24,7 +24,7 @@
           <tr>
             <th>Code</th>
             <th>Chocolates</th>
-            <th>Factory ID</th>
+            <th>Quantity</th>
             <th>Date and Time</th>
             <th>Price</th>
             <th>Status</th>
@@ -33,10 +33,10 @@
         <tbody>
           <tr v-for="purchase in purchases" :key="purchase.code">
             <td>{{ purchase.code }}</td>
-            <td>{{ purchase.chocolates.join(', ') }}</td>
-            <td>{{ purchase.factoryId }}</td>
+            <td>{{ getChocolateNames(purchase.chocolates).join(', ') }}</td>
+            <td>{{  }}</td>
             <td>{{ formatDate(purchase.dateAndTime) }}</td>
-            <td>${{ purchase.price.toFixed(2) }}</td>
+            <td>{{ purchase.price.toFixed(2) }}din</td>
             <td>{{ purchase.status }}</td>
           </tr>
         </tbody>
@@ -52,6 +52,9 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 const { ref, computed,onMounted } = require('vue');  // Vue 3 komponente koriste `require` za uvoz
 const purchases = ref([]);
+const chocolates = ref([]);
+const userRole = ref('');
+const username = ref('');
 
 const editable = ref(false);
 const user = ref({
@@ -64,14 +67,62 @@ const user = ref({
   password: ''
 });
 
+
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-US');
+  return new Date(date).toLocaleString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
-const getUserIdFromLocalStorage = () => {
- return localStorage.getItem('userId');
- 
+
+const getChocolateNames = (chocolateIds) => {
+  return chocolateIds.map(id => {
+    const chocolate = chocolates.value.find(choco => choco.id === id);
+    return chocolate ? chocolate.chocolateName : `Unknown Chocolate (${id})`;
+  });
 };
+/*const getUserIdFromLocalStorage=  async () => {
+ //return localStorage.getItem('userId');
+  const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/users/getByUsername/${username}`);
+    const user = response.data;
+  
+    if (user && user.id) {
+      return user.id;
+    } else {
+      throw new Error('User not found');
+    }
+};
+*/
+
+const getUserIdFromLocalStorage = () => {
+  const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+  const idCookie = cookies.find(cookie => cookie.startsWith('id='));
+  if (idCookie) {
+    return idCookie.split('=')[1];
+  }
+  return null;
+};
+
+/*const getUserIdFromLocalStorage = async () => {
+  try {
+    const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/users/getByUsername/${username.value}`);
+    const user = response.data;
+    console.log('dajana');
+    console.log(user);
+    if (user && user.id) {
+      return user.id;
+    } else {
+      throw new Error('User not found');
+    }
+  } catch (error) {
+    console.error('Error fetching user by username:', error);
+    return null;
+  }
+};*/
 
 const fetchUser = () => {
   const userId = getUserIdFromLocalStorage();
@@ -126,9 +177,42 @@ const fetchPurchasesByUserId = () => {
       });
   }
 };
+
+
+const fetchChocolateInfo = () => {
+  return axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates`)
+    .then(response => {
+      chocolates.value = response.data;  // Pretpostavljamo da API vraća niz objekata sa informacijama o čokoladama
+    })
+    .catch(error => {
+      console.error('Error fetching chocolate info:', error);
+    });
+};
+const getUserRoleFromCookie = () => {
+  const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+  const userRoleCookie = cookies.find(cookie => cookie.startsWith('userRole='));
+  if (userRoleCookie) {
+    return userRoleCookie.split('=')[1];
+  }
+  return null;
+};
+
+const getUsernameFromCookie = () => {
+  const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+  const usernameCookie = cookies.find(cookie => cookie.startsWith('username='));
+  if (usernameCookie) {
+    return usernameCookie.split('=')[1];
+  }
+  return null;
+};
+
+
 onMounted(() => {
   fetchUser();
   fetchPurchasesByUserId(); // Fetch purchases when the component is mounted
+  fetchChocolateInfo();
+  const userRole = ref(getUserRoleFromCookie());
+const username = ref(getUsernameFromCookie());
 });
 //onMounted(fetchUser);  // Poziv funkcije za dohvat korisnika iz LocalStorage-a pri montiranju komponente
 </script>

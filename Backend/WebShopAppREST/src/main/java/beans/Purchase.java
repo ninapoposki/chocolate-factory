@@ -1,18 +1,21 @@
 package beans;
 
-import java.sql.Date;
+
 import java.util.List;
 import beans.Chocolate;
 import beans.Factory;
 import enumerations.PurchaseStatus;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+
 
 public class Purchase{
 	
 	private String id;
-	private String code; //10 karaktera
-	private List<Chocolate> chocolates;
-	private int factoryId;
-	private Date dateAndTime;
+	private String code; 
+	private List<Integer> chocolates; // zapravo shopping carts u kojoj su cokolade
+	
+	private OffsetDateTime dateAndTime;
 	private double price;
 	private int customerId;
 	private String customerFirstName;
@@ -21,13 +24,12 @@ public class Purchase{
 	
 	public Purchase() {}
 	
-	public Purchase(String id, String code, List<Chocolate> chocolates, int factoryId, Date dateAndTime, double price,
+	public Purchase(String id, String code, List<Integer> chocolates, OffsetDateTime dateAndTime, double price,
 			int customerId, String customerFirstName, String customerLastName, PurchaseStatus status) {
 		super();
 		this.id = id;
 		this.code = code;
 		this.chocolates = chocolates;
-		this.factoryId = factoryId;
 		this.dateAndTime = dateAndTime;
 		this.price = price;
 		this.customerId = customerId;
@@ -35,6 +37,9 @@ public class Purchase{
 		this.customerLastName = customerLastName;
 		this.status = status;
 	}
+	
+	
+
 	public String getId() {
 		return id;
 	}
@@ -47,22 +52,17 @@ public class Purchase{
 	public void setCode(String code) {
 		this.code = code;
 	}
-	public List<Chocolate> getChocolates() {
+	public List<Integer> getChocolates() {
 		return chocolates;
 	}
-	public void setChocolates(List<Chocolate> chocolates) {
+	public void setChocolates(List<Integer> chocolates) {
 		this.chocolates = chocolates;
 	}
-	public int getFactoryId() {
-		return factoryId;
-	}
-	public void setFactoryId(int factoryId) {
-		this.factoryId = factoryId;
-	}
-	public Date getDateAndTime() {
+
+	public OffsetDateTime getDateAndTime() {
 		return dateAndTime;
 	}
-	public void setDateAndTime(Date dateAndTime) {
+	public void setDateAndTime(OffsetDateTime dateAndTime) {
 		this.dateAndTime = dateAndTime;
 	}
 	public double getPrice() {

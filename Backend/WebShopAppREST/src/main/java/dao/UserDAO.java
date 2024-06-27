@@ -109,7 +109,7 @@ public class UserDAO {
                user.getLastName() + "," +
                user.getGender().toString() + "," +
                user.getDateOfBirth().format(formatter) + "," +
-               user.getRole().toString();
+               user.getRole().toString() ;
     }
 
     private void loadUsers(String contextPath) {
@@ -133,7 +133,8 @@ public class UserDAO {
                 Gender gender = Gender.valueOf(data[5].trim().toUpperCase());
                 LocalDate dateOfBirth = LocalDate.parse(data[6].trim(), formatter);
                 Role role = Role.valueOf(data[7].trim().toUpperCase());
-
+                String sessionId = data.length > 8 ? data[8].trim() : null;
+                
                 User user = new User(id, username, password, firstName, lastName, gender, dateOfBirth, role);
                 users.put(id, user);
             }
@@ -186,7 +187,7 @@ public class UserDAO {
         return false;
     }
 
-
+ 
 }
 
 

@@ -2,10 +2,15 @@ package services;
 
 import java.util.Collection;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession; //dodala
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -14,13 +19,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
+import javax.servlet.http.Cookie;
+import java.util.UUID;
 import beans.Chocolate;
 import beans.User;
 import dao.ChocolateDAO;
 import dao.UserDAO;
 import dto.RegisteredUserDTO;
-
+import javax.ws.rs.core.NewCookie;
 import enumerations.Role;
 import validations.ChocolateValidator;
 import validations.PasswordValidation;
@@ -31,6 +37,9 @@ import validations.PersonalDataValidation;
 public class UserService {
 	@Context
 	ServletContext ctx;
+	
+	 @Context
+	    HttpSession session;
 	
 	@PostConstruct
     public void init() {
@@ -84,7 +93,21 @@ public class UserService {
 	        return Response.ok().entity("{\"exists\": " + exists + "}").build();
 	    }
 
-	@POST
+	 @GET
+	    @Path("/getByUsername/{username}")
+	    @Produces(MediaType.APPLICATION_JSON)
+	    public Response getUserByUsername(@PathParam("username") String username) {
+	        UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+	        User user = dao.findByUsername(username);
+
+	        if (user != null) {
+	            return Response.ok().entity(user).build();
+	        } else {
+	            return Response.status(Response.Status.NOT_FOUND).entity("User not found for username: " + username).build();
+	        }
+	    }
+	
+	/*@POST
 	@Path("/login")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -107,7 +130,106 @@ public class UserService {
 	        return Response.status(Response.Status.NOT_FOUND).entity("{\"message\": \"User not found\"}").build();
 	    }
 	}
+*/
+	
+	@POST
+	@Path("/login")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response loginUser(User loginUser, @Context HttpServletRequest request, @Context HttpServletResponse response) {
+	    UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
 
+	    String username = loginUser.getUsername();
+	    String password = loginUser.getPassword();
+
+	    if (dao.existsByUsername(username)) {
+	        boolean validUser = dao.validateUser(username, password);
+	        if (validUser) {
+	        	User user = dao.findByUsername(username);
+	        	
+	        	request.getSession().setAttribute("loginUser", user);
+	        	Cookie userCookie = new Cookie("username", user.getUsername() );
+	        	userCookie.setPath("/");
+	        	response.addCookie(userCookie);
+	        	
+	        	Cookie roleCookie = new Cookie("userRole", user.getRole().toString());
+	        	roleCookie.setPath("/");
+	        	response.addCookie(roleCookie);
+	        	
+	        	Cookie idCookie = new Cookie("id", user.getId() );
+	        	idCookie.setPath("/");
+	        	response.addCookie(idCookie);
+	        	
+	            return Response.ok().entity(user).build();
+	           // return Response.ok().entity("{\"message\": \"Login successful\"}").build();
+	        } else {
+	            return Response.status(Response.Status.UNAUTHORIZED).entity("{\"message\": \"Invalid password\"}").build();
+	        }
+	    } else {
+	        return Response.status(Response.Status.NOT_FOUND).entity("{\"message\": \"User not found\"}").build();
+	    }
+	}
+
+	
+	@POST
+	@Path("/logout")
+	public void logoutUser( @Context HttpServletRequest request, @Context HttpServletResponse response) {
+       	
+	        	request.getSession().invalidate();
+	        	Cookie userCookie = new Cookie("username", null );
+	        	userCookie.setMaxAge(0);
+	        	userCookie.setPath("/");
+	        	response.addCookie(userCookie);
+	        	
+	        	Cookie roleCookie = new Cookie("userRole", null);
+	        	roleCookie.setMaxAge(0);
+	        	roleCookie.setPath("/");
+	        	response.addCookie(roleCookie);
+	       
+	        	Cookie idCookie = new Cookie("id", null);
+	        	idCookie.setMaxAge(0);
+	        	idCookie.setPath("/");
+	        	response.addCookie(idCookie);
+	}
+
+	
+	
+/*	@POST
+	@Path("/login")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response loginUser(User loginUser) {
+	    UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+
+	    String username = loginUser.getUsername();
+	    String password = loginUser.getPassword();
+
+	    if (dao.existsByUsername(username)) {
+	        boolean validUser = dao.validateUser(username, password);
+	        if (validUser) {
+	            User user = dao.findByUsername(username);
+	            
+	            // Generiši jedinstveni session ID
+	            String sessionId = UUID.randomUUID().toString();
+	            user.setSessionId(sessionId);
+	            
+	            // Sačuvaj session ID u bazi podataka ako je potrebno
+	            dao.updateUser(user.getId(), user);
+	            
+	            // Kreiraj kolačić sa session ID-om
+	            NewCookie cookie = new NewCookie("session_id", sessionId, "/", null, null, 86400, false);
+	            
+	            return Response.ok().entity(user).cookie(cookie).build();
+	        } else {
+	            return Response.status(Response.Status.UNAUTHORIZED).entity("{\"message\": \"Invalid password\"}").build();
+	        }
+	    } else {
+	        return Response.status(Response.Status.NOT_FOUND).entity("{\"message\": \"User not found\"}").build();
+	    }
+	}*/
+	
+
+	
 	@GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
