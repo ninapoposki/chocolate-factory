@@ -1,14 +1,18 @@
 <template>
   <nav>
     <div class="nav-container">
+      <router-link to="/logout">Log out</router-link>
     <div class="nav-links">
       <router-link to="/">Factories</router-link> |
       <router-link to="/about">Log in</router-link>
     </div>
     <div class="nav-profile">
-      <router-link to="/register">Register</router-link>  |   
+      <router-link to="/register">Register</router-link>  | 
+      <router-link to="/cart">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzbIO9hbTC8-Zrd_Iv4Rt_noJWyQsHNzhm5eMTpWXPD-00e_QnVFt3FCSsRGAD9RRqGqs&usqp=CAU" alt="profile icon" class="profile-icon">
+        My Shopping Cart</router-link>  |   
       <router-link to="/profile">
-        <img src="https://t4.ftcdn.net/jpg/05/50/60/55/360_F_550605549_PaTP81pjaCsrNTnfUaYlUZ8wmPpQSHY8.jpg" alt="profile icon" class="profile-icon">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRU8TAx3eYFRfZCVkJQ7kWqKx-IxoRmxvPUlw&usqp=CAU" alt="profile icon" class="profile-icon">
         My profile
       </router-link>
     </div>

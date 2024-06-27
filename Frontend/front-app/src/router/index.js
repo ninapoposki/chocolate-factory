@@ -6,8 +6,11 @@ import FactoryDetails from '@/components/FactoryDetails.vue';
 import RegisterUser from '@/views/RegisterUser.vue';
 import MyProfile from '@/views/MyProfile.vue';
 import AddFactory from '@/components/AddFactory.vue';
+import ShoppingCart from '@/views/ShoppingCart.vue';
+import Logout from '@/views/Logout.vue';
 import AddEmployee from '@/components/AddEmployee.vue';
 import UpdateQuantity from '@/components/UpdateQuantity.vue';
+
 
 const routes = [
   {
@@ -57,6 +60,16 @@ const routes = [
     path: "/register",
     name: "register",
     component: RegisterUser,
+  },
+  {
+    path: "/cart",
+    name: "cart",
+    component: ShoppingCart,
+  },
+  {
+    path: "/logout",
+    name: "logout",
+    component: Logout,
   },
   {
     path: "/about",

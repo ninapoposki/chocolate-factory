@@ -1,6 +1,8 @@
 package dao;
 
 import java.io.BufferedReader;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -19,24 +21,27 @@ import beans.Chocolate;
 import beans.Factory;
 import beans.Purchase;
 import enumerations.PurchaseStatus;
-
+import java.time.format.DateTimeFormatter;
 public class PurchaseDAO {
 	
 	private HashMap<String, Purchase> purchases = new HashMap<String, Purchase>();
 	private String contextPath;
 	private FactoryDAO factoryDAO;
 	private ChocolateDAO chocolateDAO;
+	private ShoppingCartDAO shoppingCartDAO;
 	
 	public PurchaseDAO() {
 		
 	}
 	
-	public PurchaseDAO(String contextPath, FactoryDAO factoryDAO, ChocolateDAO chocolateDAO) {
+	public PurchaseDAO(String contextPath, FactoryDAO factoryDAO, ChocolateDAO chocolateDAO, ShoppingCartDAO shoppingCartDAO) {
 		this.contextPath = contextPath;
 		this.factoryDAO = factoryDAO;
 		this.factoryDAO.loadFactories(contextPath);
 		this.chocolateDAO  =chocolateDAO;
 		this.chocolateDAO.loadChocolates(contextPath);
+		this.shoppingCartDAO = shoppingCartDAO;
+		this.shoppingCartDAO.loadShoppingCarts(contextPath);
 		loadPurchases(contextPath);
 	}
 
@@ -79,12 +84,19 @@ public class PurchaseDAO {
 	        BufferedWriter out = new BufferedWriter(new FileWriter(filePath.toString(), true));
 
 	        StringBuilder chocolateIds = new StringBuilder();
-	        for (Chocolate chocolate : purchase.getChocolates()) {
+	      /*  for (Integer chocolate : purchase.getChocolates()) {
 	            chocolateIds.append(chocolate.getId()).append("|");
+	        }*/
+	        for (Integer chocolate : purchase.getChocolates()) {
+	            chocolateIds.append(chocolate).append("|");
 	        }
+	        
+	       // DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
+	      //  LocalDateTime dateAndTime = LocalDateTime.parse(purchase.getDateAndTime(), formatter); // Correctly parse the string
+	        String formattedDateAndTime = purchase.getDateAndTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
-	        out.write(purchase.getId() + "," + purchase.getCode() + "," + chocolateIds.toString() + "," +
-	                purchase.getFactoryId() + "," + purchase.getDateAndTime().getTime() + "," +
+	        
+	        out.write(purchase.getId() + "," + purchase.getCode() + "," + chocolateIds.toString() + "," +                     formattedDateAndTime + "," +
 	                purchase.getPrice() + "," + purchase.getCustomerId() + "," + purchase.getCustomerFirstName() + "," +
 	                purchase.getCustomerLastName() + "," + purchase.getStatus().toString() + "\n");
 
@@ -119,26 +131,38 @@ public class PurchaseDAO {
 	                continue;
 
 	            String[] data = parseCsvLine(line);
-	            String factoryId = data[3].trim();
+
+	           // String factoryId = data[3].trim();
 	            //  Factory factory = factoryDAO.findFactory(factoryId);
 
-	            List<Chocolate> chocolates = new ArrayList<>();
-	            String[] chocolateIds = data[2].split("\\|");
+
+	            List<Integer> chocolates = new ArrayList<>();
+	            String[] chocolateIds = data[2].split("\\|");  //TREBA DA BUDU SHOPPINGCARTS
 	            for (String chocolateId : chocolateIds) {
-	                chocolates.add(chocolateDAO.findChocolates(chocolateId.trim()));
+	                chocolates.add(Integer.parseInt(shoppingCartDAO.findShoppingCart(chocolateId.trim()).getId()));
 	            }
 
+	            
 	            Purchase purchase = new Purchase();
 	            purchase.setId(data[0]);
 	            purchase.setCode(data[1]);
 	            purchase.setChocolates(chocolates);
-	            purchase.setFactoryId(Integer.parseInt(factoryId));
-	            purchase.setDateAndTime(new Date(Long.parseLong(data[4])));
-	            purchase.setPrice(Double.parseDouble(data[5]));
-	            purchase.setCustomerId(Integer.parseInt(data[6]));
-	            purchase.setCustomerFirstName(data[7]);
-	            purchase.setCustomerLastName(data[8]);
-	            purchase.setStatus(PurchaseStatus.valueOf(data[9]));
+	       //     purchase.setFactoryId(Integer.parseInt(factoryId));
+	            
+
+	           // purchase.setDateAndTime(new Date(Long.parseLong(data[3])));
+	           // DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME; // Use appropriate formatter
+	          //  LocalDateTime dateAndTime = LocalDateTime.parse(data[3].trim(), formatter); // Correctly parse the string
+
+	            OffsetDateTime dateAndTime = OffsetDateTime.parse(data[3].trim(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+                purchase.setDateAndTime(dateAndTime);
+		           
+	            purchase.setPrice(Double.parseDouble(data[4]));
+	            purchase.setCustomerId(Integer.parseInt(data[5]));
+	            purchase.setCustomerFirstName(data[6]);
+	            purchase.setCustomerLastName(data[7]);
+	            purchase.setStatus(PurchaseStatus.valueOf(data[8]));
 
 	            purchases.put(purchase.getId(), purchase);
 	            System.out.println("Context path: " + contextPath);

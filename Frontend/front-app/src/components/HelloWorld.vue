@@ -39,21 +39,30 @@ function registration() {
   router.push('/register');
 }
 
-
+/*
 function login() {
   errorMessage.value = null;
 
-  axios.post('http://localhost:8080/WebShopAppREST/rest/users/login', user.value)
+  axios.post('http://localhost:8080/WebShopAppREST/rest/users/login',{
+    username: user.value.username,  // koristi se user.value.username
+    password: user.value.password 
+        })
   .then(response => {
       console.log(response.data);
       if (response.status === 200) {
         errorMessage.value = "You successfully logged in.";
         alert('You successfully logged in.');
         console.log('Response:', response);
-        
-        const userId = response.data.id; 
-        console.log(userId);
-        localStorage.setItem('userId', userId);
+
+        const user = response.data;
+        document.cookie = `id=${user.id}; path=/`;
+        document.cookie = `userRole=${user.role}; path=/`;
+
+        console.log('daja');
+        console.log(user.id);
+       // const userId = response.data.id; 
+        //console.log(userId);
+        //localStorage.setItem('userId', userId);
         router.push('/profile');
         
       }
@@ -74,6 +83,49 @@ function login() {
       }
       console.error(error);
     });
+}*/
+function login() {
+  errorMessage.value = null;
+
+  axios.post('http://localhost:8080/WebShopAppREST/rest/users/login', {
+    username: user.value.username,
+    password: user.value.password
+  })
+  .then(response => {
+    console.log(response.data);
+    const user = response.data;
+
+    if (user && user.id) {
+      errorMessage.value = "You successfully logged in.";
+      alert('You successfully logged in.');
+
+      // Set cookies or localStorage as needed
+      document.cookie = `username=${user.username}; path=/`;
+      document.cookie = `userRole=${user.role}; path=/`;
+      document.cookie = `id=${user.id}; path=/`;
+
+      console.log('User ID:', user.id);
+      router.push('/profile');
+    } else {
+      errorMessage.value = "Invalid username or password."; // or another appropriate message
+    }
+  })
+  .catch(error => {
+    if (error.response && error.response.data.message) {
+      if (error.response.data.message === "Invalid password") {
+        errorMessage.value = "Invalid password.";
+      } else if (error.response.data.message === "User not found") {
+        errorMessage.value = "User with this username does not exist.";
+      } else if (error.response.status === 403) {
+        errorMessage.value = "Your account is blocked by the administrator!";
+      } else {
+        errorMessage.value = "An error occurred. Please try again.";
+      }
+    } else {
+      errorMessage.value = "An error occurred. Please try again.";
+    }
+    console.error(error);
+  });
 }
 </script>
 

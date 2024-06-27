@@ -153,7 +153,12 @@ export default {
         });
     },
     getUserIdFromLocalStorage() {
-      return localStorage.getItem('userId');
+      const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+  const idCookie = cookies.find(cookie => cookie.startsWith('id='));
+  if (idCookie) {
+    return idCookie.split('=')[1];
+  }
+  return null;
     },
     searchFactories() {
       axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/search?search=${this.searchQuery}`)

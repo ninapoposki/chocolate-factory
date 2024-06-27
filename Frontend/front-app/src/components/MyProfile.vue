@@ -47,7 +47,7 @@
           <tr>
             <th>Code</th>
             <th>Chocolates</th>
-            <th>Factory ID</th>
+            <th>Quantity</th>
             <th>Date and Time</th>
             <th>Price</th>
             <th>Status</th>
@@ -56,10 +56,10 @@
         <tbody>
           <tr v-for="purchase in purchases" :key="purchase.code">
             <td>{{ purchase.code }}</td>
-            <td>{{ purchase.chocolates.join(', ') }}</td>
-            <td>{{ purchase.factoryId }}</td>
+            <td>{{ getChocolateNames(purchase.chocolates).join(', ') }}</td>
+            <td>{{  }}</td>
             <td>{{ formatDate(purchase.dateAndTime) }}</td>
-            <td>${{ purchase.price.toFixed(2) }}</td>
+            <td>{{ purchase.price.toFixed(2) }}din</td>
             <td>{{ purchase.status }}</td>
           </tr>
         </tbody>
@@ -153,8 +153,12 @@ import FactoryMap from '@/components/FactoryMap.vue';
 const router = useRouter();
 const { ref, computed, onMounted } = require('vue');  
 const purchases = ref([]);
+const chocolates = ref([]);
+const userRole = ref('');
+const username = ref('');
 const managerFactory = ref(null); 
 const employeeFactory = ref(null); // Dodato za fabriku zaposlenog
+
 
 const editable = ref(false);
 const user = ref({
@@ -167,13 +171,34 @@ const user = ref({
   password: ''
 });
 
+
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-US');
+  return new Date(date).toLocaleString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 };
 
+
+const getChocolateNames = (chocolateIds) => {
+  return chocolateIds.map(id => {
+    const chocolate = chocolates.value.find(choco => choco.id === id);
+    return chocolate ? chocolate.chocolateName : `Unknown Chocolate (${id})`;
+  });
+}
+
 const getUserIdFromLocalStorage = () => {
-  return localStorage.getItem('userId');
+  const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+  const idCookie = cookies.find(cookie => cookie.startsWith('id='));
+  if (idCookie) {
+    return idCookie.split('=')[1];
+  }
+  return null;
 };
+
 
 const fetchUser = () => {
   const userId = getUserIdFromLocalStorage();
@@ -256,6 +281,34 @@ const fetchPurchasesByUserId = () => {
   }
 };
 
+
+
+const fetchChocolateInfo = () => {
+  return axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates`)
+    .then(response => {
+      chocolates.value = response.data;  // Pretpostavljamo da API vraća niz objekata sa informacijama o čokoladama
+    })
+    .catch(error => {
+      console.error('Error fetching chocolate info:', error);
+    });
+};
+const getUserRoleFromCookie = () => {
+  const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+  const userRoleCookie = cookies.find(cookie => cookie.startsWith('userRole='));
+  if (userRoleCookie) {
+    return userRoleCookie.split('=')[1];
+  }
+  return null;
+};
+
+const getUsernameFromCookie = () => {
+  const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+  const usernameCookie = cookies.find(cookie => cookie.startsWith('username='));
+  if (usernameCookie) {
+    return usernameCookie.split('=')[1];
+  }
+  return null;
+};
 const navigateToAddEmployee = () => {
   if (managerFactory.value && managerFactory.value.id) {
     router.push({ name: 'addEmployee', params: { factoryId: managerFactory.value.id } });
@@ -265,12 +318,14 @@ const navigateToAddEmployee = () => {
 };
 const ShowDetails = (id) => {
   router.push(`/details/${id}`);
+
 };
 
 
 onMounted(() => {
   fetchUser();
-  fetchPurchasesByUserId(); 
+  fetchPurchasesByUserId(); // Fetch purchases when the component is mounted
+  fetchChocolateInfo();
 });
 </script>
 
