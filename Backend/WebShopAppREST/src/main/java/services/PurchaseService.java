@@ -20,6 +20,7 @@ import javax.ws.rs.core.Response;
 import beans.Chocolate;
 import beans.Purchase;
 import dao.PurchaseDAO;
+import dao.UserDAO;
 import enumerations.PurchaseStatus;
 import dao.ChocolateDAO;
 import dao.FactoryDAO;
@@ -36,19 +37,39 @@ public class PurchaseService {
 	public PurchaseService() {
 	}
 	
+//	@PostConstruct
+//	public void init() {
+//	    if (ctx.getAttribute("purchaseDAO") == null) {
+//	        String contextPath = ctx.getRealPath("");
+//	        LocationDAO locationDAO = new LocationDAO(contextPath); 
+//	        FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO);
+//	        ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath, factoryDAO);
+//	        factoryDAO.loadFactories(contextPath); 
+//	        ctx.setAttribute("factoryDAO", factoryDAO); 
+//	        PurchaseDAO purchaseDAO = new PurchaseDAO(contextPath, factoryDAO, chocolateDAO);
+//	        ctx.setAttribute("purchaseDAO", purchaseDAO); 
+//	    }
+//	}
 	@PostConstruct
-	public void init() {
-	    if (ctx.getAttribute("purchaseDAO") == null) {
-	        String contextPath = ctx.getRealPath("");
-	        LocationDAO locationDAO = new LocationDAO(contextPath); 
-	        FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO);
-	        ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath, factoryDAO);
-	        factoryDAO.loadFactories(contextPath); 
-	        ctx.setAttribute("factoryDAO", factoryDAO); 
-	        PurchaseDAO purchaseDAO = new PurchaseDAO(contextPath, factoryDAO, chocolateDAO);
-	        ctx.setAttribute("purchaseDAO", purchaseDAO); 
-	    }
-	}
+    public void init() {
+        if (ctx.getAttribute("purchaseDAO") == null) {
+            String contextPath = ctx.getRealPath("");
+            LocationDAO locationDAO = new LocationDAO(contextPath);
+            UserDAO userDAO=new UserDAO();//dodala
+            //ili ovako: proveri sa docom UserDAO userDAO=new UserDAO(contextPath)
+            ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath);
+            FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO, chocolateDAO,userDAO); //dopunila
+            chocolateDAO.setFactoryDAO(factoryDAO); // Postavite FactoryDAO u ChocolateDAO
+
+            factoryDAO.loadFactories(contextPath);
+
+            ctx.setAttribute("factoryDAO", factoryDAO);
+            ctx.setAttribute("chocolateDAO", chocolateDAO);
+
+            PurchaseDAO purchaseDAO = new PurchaseDAO(contextPath, factoryDAO, chocolateDAO);
+            ctx.setAttribute("purchaseDAO", purchaseDAO);
+        }
+    }
 
 	@GET
 	@Path("/user/{userId}")

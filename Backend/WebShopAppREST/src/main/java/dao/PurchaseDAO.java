@@ -101,6 +101,15 @@ public class PurchaseDAO {
 	    BufferedReader in = null;
 	    try {
 	        File file = new File(contextPath + "/purchases.csv");
+
+	        // Provera postojanja fajla i ispis putanje
+	        if (file.exists()) {
+	            System.out.println("Purchases file exists at: " + file.getAbsolutePath());
+	        } else {
+	            System.out.println("Purchases file does not exist at: " + file.getAbsolutePath());
+	            return;
+	        }
+
 	        in = new BufferedReader(new FileReader(file));
 	        String line;
 
@@ -111,7 +120,7 @@ public class PurchaseDAO {
 
 	            String[] data = parseCsvLine(line);
 	            String factoryId = data[3].trim();
-	          //  Factory factory = factoryDAO.findFactory(factoryId);
+	            //  Factory factory = factoryDAO.findFactory(factoryId);
 
 	            List<Chocolate> chocolates = new ArrayList<>();
 	            String[] chocolateIds = data[2].split("\\|");
@@ -146,7 +155,7 @@ public class PurchaseDAO {
 	        }
 	    }
 	}
-	
+
 	 public Collection<Purchase> findByCustomerId(int customerId) {
 	        return purchases.values().stream()
 	                .filter(purchase -> purchase.getCustomerId() == customerId)
