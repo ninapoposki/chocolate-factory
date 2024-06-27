@@ -14,7 +14,7 @@ public class Purchase{
 	private String id;
 	private String code; 
 	private List<Integer> chocolates; // zapravo shopping carts u kojoj su cokolade
-	
+	private int factoryId;
 	private OffsetDateTime dateAndTime;
 	private double price;
 	private int customerId;

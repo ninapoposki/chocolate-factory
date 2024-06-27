@@ -8,6 +8,9 @@ import MyProfile from '@/views/MyProfile.vue';
 import AddFactory from '@/components/AddFactory.vue';
 import ShoppingCart from '@/views/ShoppingCart.vue';
 import Logout from '@/views/Logout.vue';
+import AddEmployee from '@/components/AddEmployee.vue';
+import UpdateQuantity from '@/components/UpdateQuantity.vue';
+
 
 const routes = [
   {
@@ -41,6 +44,18 @@ const routes = [
     name: "profile",
     component: MyProfile,
   },
+  {
+    path: "/changeQuantity/:id",
+    name: "changeQuantity",
+    component: UpdateQuantity,
+  },
+  {
+    path: "/addEmployee/:factoryId",
+    name: "addEmployee",
+    component: AddEmployee,
+    props: true // da se proslede kao props parametri?
+  },
+
   {
     path: "/register",
     name: "register",

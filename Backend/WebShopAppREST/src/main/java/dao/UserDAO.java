@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 
 public class UserDAO {
 
@@ -112,7 +112,7 @@ public class UserDAO {
                user.getRole().toString() ;
     }
 
-    private void loadUsers(String contextPath) {
+    public void loadUsers(String contextPath) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         BufferedReader in = null;
         try {
@@ -186,8 +186,16 @@ public class UserDAO {
         }
         return false;
     }
+    
+    //za pronalazak slobodnih 
+    //ovo ti ne treba mozes direktno pozvati
+    public List<User> findUnassignedManagers(Collection<String> assignedManagerIds) {
+        return users.values().stream()
+                .filter(user -> user.getRole() == Role.MANAGER && !assignedManagerIds.contains(user.getId()))
+                .collect(Collectors.toList());
+    }
 
- 
+
 }
 
 

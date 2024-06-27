@@ -10,7 +10,7 @@
                           <th>Name</th>
                           <th>Location</th>
                           <th>Working Time</th>
-                          <th>Grade</th>
+                          <th v-if="factory.grade !== 0.0">Grade</th>
                           <th>Status</th>
                           <th>Comments</th>
                       </tr>
@@ -21,7 +21,7 @@
                           <td>{{ factory.factoryName }}</td>
                           <td>{{ factory.location.street }} {{ factory.location.streetNumber }}, {{ factory.location.city }} {{ factory.location.postalCode }}</td>
                           <td>{{ factory.workingTime }}</td>
-                          <td>{{ factory.grade }}</td>
+                          <td v-if="factory.grade !== 0.0">{{ factory.grade }}</td>
                           <td>{{ factory.isStatus ? 'active' : 'inactive' }}</td>
                           <td>None</td>
                       </tr>
@@ -58,10 +58,13 @@
                           <td>{{ chocolate.description }}</td>
                           <td><img :src="chocolate.imageUri" alt="Chocolate Image" class="logo" /></td>
                           <td class="buttons">
-                              <button class="small-button"  v-if="userRole === 'ADMINISTRATOR'" @click="updateChocolate(chocolate)">Change chocolate</button>
-                              <button class="small-button" @click="deleteChocolate(chocolate.id)">Delete chocolate</button>
+
+                            <!-- ne nzam da li admin sme da update cokolade radi ? proveri-menadzser sme da doda cokoladu da je brise i apdejtuje  -->
+                              <button v-if="userRole === 'MANAGER'" @click="updateChocolate(chocolate)">Change chocolate</button>
+                              <button v-if="userRole === 'EMPLOYEE'" @click="changeQuantity(chocolate)">Change Quantity</button>
+                              <button v-if="userRole === 'MANAGER'" class="small-button" @click="deleteChocolate(chocolate.id)">Delete chocolate</button>
                               <button class="small-button" v-if="userRole === 'CUSTOMER'" @click="showQuantityDialog(chocolate)">Add to Cart</button>
-            
+
                           </td>
 
                     
@@ -113,20 +116,38 @@ let quantityExceedsStockError = ref(false);
 
 let quantity = ref(1); // Initial quantity value
 
+const getUserRoleFromCookie = () => {
+  const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+  const userRoleCookie = cookies.find(cookie => cookie.startsWith('userRole='));
+  if (userRoleCookie) {
+    return userRoleCookie.split('=')[1];
+  }
+  return null;
+};
+const getUserIdFromLocalStorage = () => {
+  const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+  const idCookie = cookies.find(cookie => cookie.startsWith('id='));
+  if (idCookie) {
+    return idCookie.split('=')[1];
+  }
+  return null;
+};
+
 onMounted(() => {
   
   const userId = getUserIdFromLocalStorage();
   console.log(userId);
   
   //trenutni korisnik 
-  axios.get(`http://localhost:8080/WebShopAppREST/rest/users/${userId}`)
+ /* axios.get(`http://localhost:8080/WebShopAppREST/rest/users/${userId}`)
     .then(response => {
       userRole.value = response.data.role;
     })
     .catch(error => {
       console.error('Error fetching user details', error);
     });
-
+*/
+userRole.value = getUserRoleFromCookie();
 
 
   const id = route.params.id;
@@ -152,6 +173,10 @@ function updateChocolate(chocolate) {
   router.push({ name: 'update', params: { id: chocolate.id } });
 }
 
+function changeQuantity(chocolate) {
+  router.push({ name: 'changeQuantity', params: { id: chocolate.id } });
+}
+
 function deleteChocolate(chocolateId) {
   axios.delete(`http://localhost:8080/WebShopAppREST/rest/chocolates/${chocolateId}`)
       .then(() => {
@@ -173,10 +198,10 @@ function addToCart() {
     console.error('Cannot add to cart: Invalid chocolate item.');
     return;
   }
-  if (quantity > selectedChocolate.numberOfChocolates || !selectedChocolate.isOnStock) {
+ /* if (quantity.value > selectedChocolate.numberOfChocolates || !selectedChocolate.isOnStock) {
     quantityExceedsStockError.value = true;
     return;
-  }
+  }*/
 
   const userId = getUserIdFromLocalStorage();
   const shoppingCart = {
@@ -211,10 +236,7 @@ function addToCart() {
       alert('Failed to add chocolate to cart');
     });
 }
-const getUserIdFromLocalStorage = () => {
- return localStorage.getItem('userId');
- 
-};
+
 defineExpose({ updateChocolate });
 </script>
 
@@ -254,7 +276,7 @@ body {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   overflow: hidden;
-  margin: 0 auto; /* Center the table */
+  margin: 0 auto;
 }
 
 th, td {

@@ -11,6 +11,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import beans.ShoppingCart;
 import dao.ShoppingCartDAO;
+import dao.UserDAO;
 import dto.ShoppingCartDTO;
 import dao.ChocolateDAO;
 import dao.FactoryDAO;
@@ -29,8 +30,10 @@ public class ShoppingCartService {
         if (ctx.getAttribute("shoppingCartDAO") == null) {
             String contextPath = ctx.getRealPath("");
             LocationDAO locationDAO = new LocationDAO(contextPath); 
-            FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO);
-            ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath, factoryDAO);
+            UserDAO userDAO=new UserDAO();
+	        ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath);
+            FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO,chocolateDAO,userDAO);
+            
             factoryDAO.loadFactories(contextPath); 
             ctx.setAttribute("factoryDAO", factoryDAO); 
             ShoppingCartDAO shoppingCartDAO = new ShoppingCartDAO(contextPath, chocolateDAO);
