@@ -40,6 +40,17 @@ public class ShoppingCartDAO {
 	public ShoppingCart findShoppingCart(String id) {
 		return shoppingCarts.containsKey(id) ? shoppingCarts.get(id) : null;
 	}
+	  public int findChocolateQuantity(String cartId, int chocolateId) {
+
+	        ShoppingCart shoppingCart = findShoppingCart(cartId);
+	        if (shoppingCart != null) {
+	            Map<Integer, Integer> chocolates = shoppingCart.getChocolates();
+	            if (chocolates.containsKey(chocolateId)) {
+	                return chocolates.get(chocolateId);
+	            }
+	        }
+	        return -1; // ili neka druga indikativna vrednost ako čokolada nije pronađena
+	    }
 	
 	/*public ShoppingCart updateProduct(String id, ShoppingCart shoppingCart) {
 		ShoppingCart p = shoppingCarts.containsKey(id) ? shoppingCarts.get(id) : null;
@@ -146,7 +157,7 @@ public class ShoppingCartDAO {
 	
 	  public List<String> findShoppingCartIdsByCustomerId(int customerId) {
 	        return shoppingCarts.values().stream()
-	                .filter(shoppingCart -> shoppingCart.getCustomerId() == customerId)
+	                .filter(shoppingCart -> shoppingCart.getCustomerId() == customerId && shoppingCart.getState())
 	                .map(ShoppingCart::getId)
 	                .collect(Collectors.toList());
 	    }

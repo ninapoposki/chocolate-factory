@@ -60,6 +60,7 @@ public class UserDAO {
             u.setGender(user.getGender());
             u.setDateOfBirth(user.getDateOfBirth());
             u.setRole(user.getRole());
+            u.setPoints(user.getPoints());
             saveToFile();
         }
         return u;
@@ -109,7 +110,8 @@ public class UserDAO {
                user.getLastName() + "," +
                user.getGender().toString() + "," +
                user.getDateOfBirth().format(formatter) + "," +
-               user.getRole().toString() ;
+               user.getRole().toString() + "," + 
+               user.getPoints();
     }
 
     public void loadUsers(String contextPath) {
@@ -133,9 +135,9 @@ public class UserDAO {
                 Gender gender = Gender.valueOf(data[5].trim().toUpperCase());
                 LocalDate dateOfBirth = LocalDate.parse(data[6].trim(), formatter);
                 Role role = Role.valueOf(data[7].trim().toUpperCase());
-                String sessionId = data.length > 8 ? data[8].trim() : null;
+                double points = Double.parseDouble(data[8].trim());
                 
-                User user = new User(id, username, password, firstName, lastName, gender, dateOfBirth, role);
+                User user = new User(id, username, password, firstName, lastName, gender, dateOfBirth, role, points);
                 users.put(id, user);
             }
         } catch (IOException e) {

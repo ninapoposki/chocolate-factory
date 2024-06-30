@@ -39,9 +39,13 @@
           </div>
         </div>
         <div class="total-section">
-          <div class="total">Total: {{ totalPrice }} din</div>
+           <div class="total">Total: {{ totalPrice }} din</div>
+          <div class="discount">Discount: -{{ userDiscount }}%</div>
+          <hr/>
+          <div class="total">Total with discount: {{ discountPrice }} din</div>
+          </div>
           <button class="checkout-button" @click="goToCheckout">Go to Checkout</button>
-        </div>
+        
       </div>
       <div v-else>
         <p>No chocolates found in your cart.</p>
@@ -64,6 +68,9 @@ const userName = ref({ firstName: '', lastName: '' });
 const carts = ref([]);
 const editableQuantities = ref({});
 const chocolateId= ref('');
+const userPoints = ref(0);
+const userDiscount = ref(0);
+
 
 const getUserIdFromLocalStorage = () => {
   const cookies = document.cookie.split(';').map(cookie => cookie.trim());
@@ -116,7 +123,9 @@ async function fetchExistingCodes() {
 async function fetchShoppingCartIds(userId) {
   try {
     const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/shoppingCarts/user/${userId}/ids`);
-    return response.data; // Očekujemo da ovde bude lista stringova
+    return response.data;
+    console.log('dajanaaaaaa');
+    console.log(response.data); // Očekujemo da ovde bude lista stringova
   } catch (error) {
     console.error('Greška prilikom preuzimanja shoppingCartIds:', error);
     return [];
@@ -193,19 +202,15 @@ onMounted(async () => {
     console.log('Uloga korisnika:', userRole.value);
     console.log('Ime korisnika:', userName.value.firstName);
     console.log('Prezime korisnika:', userName.value.lastName);
+    userPoints.value = response.data.points;
+    console.log('Bodovi korisnika:', userPoints.value);
+
+    //discountPrice.value = calculateDiscount(userPoints);
+    //discountPrice.value = calculateDiscount(totalPrice.value, userPoints);
+   // console.log('popust', discountPrice.value);
   } catch (error) {
     console.error('Greška prilikom preuzimanja podataka o korisniku', error);
-  }/*
-  try {
-    const response = await axios.get('http://localhost:8080/WebShopAppREST/rest/users/validateSession');
-    userId.value = response.data;
-    localStorage.setItem('userId', userId.value);
-    console.log('User ID:', userId.value);
-  } catch (error) {
-    console.error('Greška prilikom validacije sesije:', error);
-  }*/
-
-  // Preuzimanje svih korpi za kupovinu
+  }
   try {
     const shoppingCarts = await fetchShoppingCarts(userId.value);
     carts.value = shoppingCarts;
@@ -257,7 +262,77 @@ async function removeFromCart(chocolateId) {
 const totalPrice = computed(() => {
   return chocolates.value.reduce((sum, chocolate) => sum + (chocolate.price * chocolate.quantity), 0).toFixed(2);
 });
+const discountPrice = computed(() => {
+  return calculateDiscount(totalPrice.value, userPoints.value);
+});
 
+function calculateDiscount(totalPrice, userPoints) {
+  let discount = 0;
+  if (userPoints > 5000) {
+    discount = 0.05; // 5% popust
+  } else if (userPoints > 3000) {
+    discount = 0.03; // 3% popust
+  }
+  userDiscount.value = discount*100;
+  return (totalPrice * (1 - discount)).toFixed(2); // Vraća numeričku vrednost sa popustom
+}
+async function goToCheckout() {
+  try {
+   
+   
+    const existingCodes = await fetchExistingCodes();
+    let purchaseCode;
+
+    do {
+      purchaseCode = generateRandomCode();
+    } while (existingCodes.includes(purchaseCode));
+
+    const firstChocolateId = chocolates.value.length ? chocolates.value[0].id : null;
+    let factoryId = null;
+
+    if (firstChocolateId) {
+      factoryId = await fetchFactoryId(firstChocolateId);
+      
+    }
+    
+     const shoppingCartIds = await fetchShoppingCartIds(userId.value);
+     console.log('Shopping Cart IDs: a', shoppingCartIds);
+    
+    console.log('totalna cenaaaaa', totalPrice.value);
+
+    const discountedTotalPrice = discountPrice.value;
+
+    console.log('cenaobracnataaaaaaa', discountedTotalPrice);
+
+    const purchase = {
+      code: purchaseCode,
+      chocolates: shoppingCartIds,
+      dateAndTime: new Date(),
+      price: discountedTotalPrice,
+      factoryId: factoryId,
+      customerId: userId.value,
+      customerFirstName: userName.value.firstName,
+      customerLastName: userName.value.lastName,
+      status: 'PROCESSING'
+    };
+
+    const response = await axios.post('http://localhost:8080/WebShopAppREST/rest/purchases', purchase);
+    console.log('Kupovina kreirana:', response.data);
+  
+
+    const user = await fetchUser(userId.value);
+    if (user) {
+      user.points = user.points + (totalPrice.value / 1000 * 133);
+      const updatedUser = await updateUser(userId.value, user);
+      console.log('Korisnik ažuriran:', updatedUser);
+    }
+
+    router.push('/profile');
+  } catch (error) {
+    console.error('Greška prilikom kreiranja kupovine:', error);
+  }
+}
+/*
 async function goToCheckout() {
   try {
     const existingCodes = await fetchExistingCodes();
@@ -282,11 +357,21 @@ async function goToCheckout() {
 
     console.log(shoppingCartIds);
 
+    console.log('totalna cenaaaaa', totalPrice);
+    const discountedTotalPrice = discountPrice.value;
+    //const discountedTotalPrice = calculateDiscount(totalPrice.value, userPoints.value);
+    
+    console.log('cenaobracnataaaaaaa', discountedTotalPrice);
+
     const purchase = {
       code: purchaseCode,
       chocolates: shoppingCartIds,
       dateAndTime: new Date(),
+<<<<<<< HEAD
+      price: discountedTotalPrice,// totalPrice.value,
+=======
       price: totalPrice.value,
+>>>>>>> origin/glavna_irina
       factoryId: factoryId,
       customerId: userId.value,
       customerFirstName: userName.value.firstName,
@@ -296,13 +381,46 @@ async function goToCheckout() {
 
     const response = await axios.post('http://localhost:8080/WebShopAppREST/rest/purchases', purchase);
     console.log('Kupovina kreirana:', response.data);
+<<<<<<< HEAD
+  
+    const user = await fetchUser(userId.value);
+    if (user) {
+      // Ažuriranje bodova korisnika
+      user.points =user.points +(totalPrice.value) /1000 * 133; 
+      const updatedUser = await updateUser(userId.value, user);
+      console.log('Korisnik ažuriran:', updatedUser);
+    }
+
+=======
     // Nakon uspešne kupovine, možete preusmeriti korisnika na stranicu za potvrdu ili status kupovine
+>>>>>>> origin/glavna_irina
     router.push('/profile');
   } catch (error) {
     console.error('Greška prilikom kreiranja kupovine:', error);
   }
 }
 
+
+*/
+async function fetchUser(userId) {
+  try {
+    const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/users/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching user with ID: ${userId}`, error);
+    return null;
+  }
+}
+
+async function updateUser(userId, updatedUser) {
+  try {
+    const response = await axios.put(`http://localhost:8080/WebShopAppREST/rest/users/update/${userId}`, updatedUser);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating user with ID: ${userId}`, error);
+    return null;
+  }
+}
 
 async function toggleEditQuantity(chocolate) {
   if (editableQuantities.value[chocolate.id]) {
@@ -341,6 +459,17 @@ async function toggleEditQuantity(chocolate) {
   // Toggle the edit mode
   editableQuantities.value[chocolate.id] = !editableQuantities.value[chocolate.id];
 }
+
+const discountPercentage = computed(() => {
+  if (userPoints.value > 1000) {
+    return 10;
+  } else if (userPoints.value > 500) {
+    return 5;
+  } else {
+    return 0;
+  }
+});
+
 async function fetchCartIdContainingChocolate(chocolateId, userId) {
   try {
     const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/shoppingCarts/user/${userId}`);
@@ -381,6 +510,12 @@ async function fetchCartIdContainingChocolate(chocolateId, userId) {
   right: 0;
   bottom: 0;
   z-index: -1; /* Postavljanje da bude ispod sadržaja */
+}
+.discount {
+  font-size: 16px;
+  color: #ff0000;
+  font-size: 1.3rem;
+  font-weight: bold;
 }
 
 .container {
@@ -481,15 +616,14 @@ h1 {
 
 .total-section {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1rem;
-  padding: 1rem;
-  border-top: 1px solid #ccc;
+  flex-direction: column;
+  gap: 10px;
+  width: 500px;
+  align-items: flex-end;
 }
 
 .total {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: bold;
 }
 

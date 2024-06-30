@@ -147,6 +147,20 @@ public class PurchaseService {
 	        Purchase savedPurchase = dao.save(purchase);
 	        return Response.status(Response.Status.CREATED).entity(savedPurchase).build();
 	    }
+
+	
+	  @PUT
+	    @Path("/cancel/{id}")
+	    @Produces(MediaType.APPLICATION_JSON)
+	    public Response cancelPurchase(@PathParam("id") String id) {
+	        PurchaseDAO dao = (PurchaseDAO) ctx.getAttribute("purchaseDAO");
+	        Purchase updatedPurchase = dao.updatePurchaseStatus(id, PurchaseStatus.CANCELLED);
+	        if (updatedPurchase == null) {
+	            return Response.status(Response.Status.NOT_FOUND).build();
+	        }
+	        return Response.ok(updatedPurchase).build();
+	    }
+
 	 @PUT
 	 @Path("/status/{purchaseId}")
 	 @Consumes(MediaType.APPLICATION_JSON)

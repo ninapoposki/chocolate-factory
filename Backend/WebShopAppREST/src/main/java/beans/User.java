@@ -16,7 +16,7 @@ public class User {
 	private Gender gender;
 	private LocalDate dateOfBirth;
 	private Role role;
-
+	private double points;
 	
 	public User() {
 		super();
@@ -24,7 +24,7 @@ public class User {
 
 
 	public User(String id,String username, String password, String firstName, String lastName, Gender gender, LocalDate dateOfBirth,
-			Role role) {
+			Role role, double points) {
 		super();
 		this.id = id;
 		this.username = username;
@@ -34,6 +34,7 @@ public class User {
 		this.gender = gender;
 		this.dateOfBirth = dateOfBirth;
 		this.role = role;
+		this.points = points;
 	}
 
 
@@ -44,6 +45,17 @@ public class User {
 
 	public void setId(String id) {
 		this.id = id;
+	}
+
+	
+
+	public double getPoints() {
+		return points;
+	}
+
+
+	public void setPoints(double points) {
+		this.points = points;
 	}
 
 

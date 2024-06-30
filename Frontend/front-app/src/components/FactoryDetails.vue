@@ -189,19 +189,21 @@ function deleteChocolate(chocolateId) {
       });
 }
 function showQuantityDialog(chocolateItem) {
+  quantityExceedsStockError.value = false;
   selectedChocolate.value = chocolateItem;  // Use selectedChocolate
   selectedChocolateId.value = chocolateItem.id;
 }
 
 function addToCart() {
+  
   if (!selectedChocolate.value || !selectedChocolate.value.id) {  // Use selectedChocolate
     console.error('Cannot add to cart: Invalid chocolate item.');
     return;
   }
- /* if (quantity.value > selectedChocolate.numberOfChocolates || !selectedChocolate.isOnStock) {
+  if (quantity.value > selectedChocolate.value.numberOfChocolates || !selectedChocolate.value.isOnStock) {
     quantityExceedsStockError.value = true;
     return;
-  }*/
+  }
 
   const userId = getUserIdFromLocalStorage();
   const shoppingCart = {

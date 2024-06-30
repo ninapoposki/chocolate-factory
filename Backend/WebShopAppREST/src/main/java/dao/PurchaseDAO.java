@@ -234,6 +234,13 @@ public class PurchaseDAO {
 	            purchase.setChocolates(chocolates);
 	            purchase.setFactoryId(Integer.parseInt(factoryId));
 
+	            
+
+	           // purchase.setDateAndTime(new Date(Long.parseLong(data[3])));
+	           // DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME; // Use appropriate formatter
+	          //  LocalDateTime dateAndTime = LocalDateTime.parse(data[3].trim(), formatter); // Correctly parse the string
+
+
 	            OffsetDateTime dateAndTime = OffsetDateTime.parse(data[3].trim(), DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 	            purchase.setDateAndTime(dateAndTime);
 
@@ -265,6 +272,17 @@ public class PurchaseDAO {
 	                .filter(purchase -> purchase.getCustomerId() == customerId)
 	                .collect(Collectors.toList());
 	    }
+
+	  public Purchase updatePurchaseStatus(String id, PurchaseStatus status) {
+	        Purchase p = purchases.containsKey(id) ? purchases.get(id) : null;
+	        if (p != null) {
+	            p.setStatus(status);
+	            purchases.put(id, p); 
+	            rewriteFile();
+	        }
+	        return p;
+	    }
+
 	 
 	 public Collection<Purchase> findByFactoryId(int factoryId) {
 		    Collection<Purchase> result = purchases.values().stream()
@@ -273,7 +291,11 @@ public class PurchaseDAO {
 		    System.out.println("Found " + result.size() + " purchases for factoryId " + factoryId);
 		    return result;
 		}
+
 	
+	 
+
+	  
 	private String[] parseCsvLine(String line) {
 	    List<String> tokens = new ArrayList<>();
 	    StringBuilder currentToken = new StringBuilder();
@@ -292,124 +314,7 @@ public class PurchaseDAO {
 	    return tokens.toArray(new String[0]);
 	}
 	
-//	public Collection<Purchase> searchAndSortPurchases(String search, String sortBy, boolean ascending, int userId, boolean isCustomer) {
-//	    System.out.println("Search parameters: " + search);
-//	    System.out.println("Sort by: " + sortBy);
-//	    System.out.println("Ascending: " + ascending);
-//	    System.out.println("User ID: " + userId);
-//	    System.out.println("Is customer: " + isCustomer);
-//
-//	    class SearchParams {
-//	        Double minPrice = null;
-//	        Double maxPrice = null;
-//	        OffsetDateTime startDate = null;
-//	        OffsetDateTime endDate = null;
-//	        String factoryName = null;
-//	    }
-//
-//	    SearchParams params = new SearchParams();
-//
-//	    try {
-//	        if (search != null && !search.isEmpty()) {
-//	            String[] searchParams = search.split(";");
-//	            for (String param : searchParams) {
-//	                String[] keyValue = param.split("=");
-//	                switch (keyValue[0].toLowerCase()) {
-//	                    case "minprice":
-//	                        params.minPrice = Double.valueOf(keyValue[1]);
-//	                        break;
-//	                    case "maxprice":
-//	                        params.maxPrice = Double.valueOf(keyValue[1]);
-//	                        break;
-//	                    case "startdate":
-//	                        params.startDate = OffsetDateTime.parse(keyValue[1]);
-//	                        break;
-//	                    case "enddate":
-//	                        params.endDate = OffsetDateTime.parse(keyValue[1]);
-//	                        break;
-//	                    case "factoryname":
-//	                        params.factoryName = keyValue[1].toLowerCase();
-//	                        break;
-//	                }
-//	            }
-//	        }
-//
-//	        System.out.println("Parsed search parameters: " + params);
-//
-//	        // Filtriranje
-//	        Stream<Purchase> purchaseStream = purchases.values().stream()
-//	                .filter(purchase -> {
-//	                    boolean userFilter;
-//	                    if (isCustomer) {
-//	                        userFilter = purchase.getCustomerId() == userId;
-//	                    } else {
-//	                        // Ako je menadžer, filtriraj prema fabrici kojom upravlja
-//	                        Factory managerFactory = factoryDAO.findFactoryByUserId(String.valueOf(userId));
-//	                        userFilter = managerFactory != null && String.valueOf(purchase.getFactoryId())  == managerFactory.getId();
-//	                    }
-//	                    System.out.println("User filter result for " + purchase.getId() + ": " + userFilter);
-//	                    return userFilter;
-//	                })
-//	                .filter(purchase -> {
-//	                    boolean priceFilter = (params.minPrice == null || purchase.getPrice() >= params.minPrice) && 
-//	                                          (params.maxPrice == null || purchase.getPrice() <= params.maxPrice);
-//	                    System.out.println("Price filter result for " + purchase.getId() + ": " + priceFilter);
-//	                    return priceFilter;
-//	                })
-//	                .filter(purchase -> {
-//	                    boolean dateFilter = (params.startDate == null || !purchase.getDateAndTime().isBefore(params.startDate)) &&
-//	                                         (params.endDate == null || !purchase.getDateAndTime().isAfter(params.endDate));
-//	                    System.out.println("Date filter result for " + purchase.getId() + ": " + dateFilter);
-//	                    return dateFilter;
-//	                })
-//	                .filter(purchase -> {
-//	                    boolean factoryFilter = params.factoryName == null ||
-//	                                            factoryDAO.findFactory(String.valueOf(purchase.getFactoryId())).getFactoryName().toLowerCase().contains(params.factoryName);
-//	                    System.out.println("Factory name filter result for " + purchase.getId() + ": " + factoryFilter);
-//	                    return factoryFilter;
-//	                });
-//
-//	        List<Purchase> filteredPurchases = purchaseStream.collect(Collectors.toList());
-//	        System.out.println("Filtered purchases: " + filteredPurchases);
-//
-//	        // Sortiranje
-//	        Comparator<Purchase> comparator = getComparator(sortBy, ascending);
-//	        if (comparator != null) {
-//	            filteredPurchases.sort(comparator);
-//	        }
-//
-//	        System.out.println("Result size: " + filteredPurchases.size());
-//	        return filteredPurchases;
-//	    } catch (Exception e) {
-//	        e.printStackTrace();
-//	        System.err.println("Error in searchAndSortPurchases: " + e.getMessage());
-//	        throw e; // ili vratite prazan rezultat ili prilagodite kako želite da obradite grešku
-//	    }
-//	}
-//
-//	private Comparator<Purchase> getComparator(String sortBy, boolean ascending) {
-//	    Comparator<Purchase> comparator = null;
-//	    if (sortBy != null) {
-//	        switch (sortBy.toLowerCase()) {
-//	            case "factoryname":
-//	                comparator = Comparator.comparing(purchase -> factoryDAO.findFactory(String.valueOf(purchase.getFactoryId())).getFactoryName());
-//	                break;
-//	            case "price":
-//	                comparator = Comparator.comparing(Purchase::getPrice);
-//	                break;
-//	            case "date":
-//	                comparator = Comparator.comparing(Purchase::getDateAndTime);
-//	                break;
-//	            default:
-//	                throw new IllegalArgumentException("Invalid sort parameter: " + sortBy);
-//	        }
-//
-//	        if (!ascending) {
-//	            comparator = comparator.reversed();
-//	        }
-//	    }
-//	    return comparator;
-//	}
+
 	
 	public Collection<Purchase> searchAndSortPurchasesByFactory(int factoryId,  Double minPrice, Double maxPrice, String startDate, String endDate, String sortBy, boolean ascending) {
 	    final OffsetDateTime start;
