@@ -18,12 +18,10 @@ import javax.ws.rs.core.Response;
 
 import beans.Factory;
 import beans.Location;
-import beans.Purchase;
 import beans.User;
 import dao.ChocolateDAO;
 import dao.FactoryDAO;
 import dao.LocationDAO;
-import dao.PurchaseDAO;
 import dao.UserDAO;
 import enumerations.Role;
 
@@ -31,7 +29,7 @@ import enumerations.Role;
 public class FactoryService {
     @Context
     ServletContext ctx;
-    
+
     public FactoryService() {
     }
 
@@ -43,16 +41,14 @@ public class FactoryService {
             ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath);
             UserDAO userDAO = new UserDAO(contextPath);
             FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO, chocolateDAO, userDAO);
+            
             ctx.setAttribute("factoryDAO", factoryDAO);
             ctx.setAttribute("userDAO", userDAO);
 
-            // Postavljanje referencu na FactoryDAO u ChocolateDAO
             chocolateDAO.setFactoryDAO(factoryDAO);
 
-            // Učitajte čokolade pre nego što učitate fabrike
             chocolateDAO.loadChocolates(contextPath);
 
-            // Učitajte fabrike
             factoryDAO.loadFactories(contextPath);
         } else {
             System.out.println("FactoryDAO already initialized.");
@@ -175,8 +171,6 @@ public class FactoryService {
         return Response.status(Response.Status.CREATED).entity(savedFactory).build();
     }
     
-    
-    
     @GET
     @Path("/factoriesForManager/{userId}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -185,7 +179,6 @@ public class FactoryService {
         Collection<Factory> factories = factoryDao.findFactoriesByUserId(userId);
         return Response.ok(factories).build();
     }
-    
     
     @POST
     @Path("/addEmployee/{factoryId}")
@@ -227,5 +220,4 @@ public class FactoryService {
         }
         return Response.ok(factory).build();
     }
-
 }

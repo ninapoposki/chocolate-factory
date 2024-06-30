@@ -190,9 +190,12 @@ public class ChocolateService {
 	         int quantity = jsonObject.getInt("numberOfChocolates");
 
 	         chocolate.setNumberOfChocolates(quantity);
+
 	         chocolate.setIsOnStock(true);
+				chocolate.setIsActive(true);
 	         if(quantity == 0) {
 	        	 chocolate.setIsOnStock(false);
+	        	 chocolate.setIsActive(false);
 	         }
 	         
 	         dao.updateChocolate(id, chocolate);

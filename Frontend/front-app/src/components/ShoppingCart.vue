@@ -71,6 +71,7 @@ const chocolateId= ref('');
 const userPoints = ref(0);
 const userDiscount = ref(0);
 
+
 const getUserIdFromLocalStorage = () => {
   const cookies = document.cookie.split(';').map(cookie => cookie.trim());
   const idCookie = cookies.find(cookie => cookie.startsWith('id='));
@@ -366,7 +367,11 @@ async function goToCheckout() {
       code: purchaseCode,
       chocolates: shoppingCartIds,
       dateAndTime: new Date(),
+<<<<<<< HEAD
       price: discountedTotalPrice,// totalPrice.value,
+=======
+      price: totalPrice.value,
+>>>>>>> origin/glavna_irina
       factoryId: factoryId,
       customerId: userId.value,
       customerFirstName: userName.value.firstName,
@@ -376,6 +381,7 @@ async function goToCheckout() {
 
     const response = await axios.post('http://localhost:8080/WebShopAppREST/rest/purchases', purchase);
     console.log('Kupovina kreirana:', response.data);
+<<<<<<< HEAD
   
     const user = await fetchUser(userId.value);
     if (user) {
@@ -385,6 +391,9 @@ async function goToCheckout() {
       console.log('Korisnik ažuriran:', updatedUser);
     }
 
+=======
+    // Nakon uspešne kupovine, možete preusmeriti korisnika na stranicu za potvrdu ili status kupovine
+>>>>>>> origin/glavna_irina
     router.push('/profile');
   } catch (error) {
     console.error('Greška prilikom kreiranja kupovine:', error);
