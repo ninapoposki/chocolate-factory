@@ -14,31 +14,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
-
 import beans.Factory;
 import beans.Location;
 import beans.User;
 import enumerations.Role;
 
 public class FactoryDAO {
-	
-	private HashMap<String, Factory> factories = new HashMap<String, Factory>();
-	private LocationDAO locationDAO;  
+    private HashMap<String, Factory> factories = new HashMap<String, Factory>();
+    private LocationDAO locationDAO;  
     private ChocolateDAO chocolateDAO; 
-    private UserDAO userDAO; //ovo dodala
+    private UserDAO userDAO; 
 
-	private String contextPath;
-	public FactoryDAO() {
-		
-	}
+    private String contextPath;
 
-    public FactoryDAO(String contextPath, LocationDAO locationDAO,ChocolateDAO chocolateDAO,UserDAO userDAO) {
+    public FactoryDAO() {
+    }
+
+    public FactoryDAO(String contextPath, LocationDAO locationDAO, ChocolateDAO chocolateDAO, UserDAO userDAO) {
         this.contextPath = contextPath;
         this.locationDAO = locationDAO;
         this.chocolateDAO = chocolateDAO;
-        this.userDAO=userDAO; //ovo dodala
-        this.userDAO.loadUsers(contextPath);//ovo dodala
+        this.userDAO = userDAO;
+        this.userDAO.loadUsers(contextPath);
         this.locationDAO.loadLocations(contextPath);
         loadFactories(contextPath);
     }
@@ -65,7 +62,6 @@ public class FactoryDAO {
             f.setChocolates(factory.getChocolates());
             saveFactories(); 
         }
-        
         return f;
     }
 
@@ -98,6 +94,7 @@ public class FactoryDAO {
             }
             out.flush();
             out.close();
+            System.out.println("All factories saved to file successfully.");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -121,16 +118,15 @@ public class FactoryDAO {
                employeesBuilder.toString();
     }
 
-
     private void saveToFile(Factory factory) {
         try {
             Path filePath = Paths.get(contextPath + "/factories.csv");
-            BufferedWriter out = new BufferedWriter(new FileWriter(filePath.toString(), true)); // true za dodavanje u fajl
+            BufferedWriter out = new BufferedWriter(new FileWriter(filePath.toString(), true)); 
 
             out.write(factoryToCsv(factory) + "\n");
             out.flush();
             out.close();
-            System.out.println("Factory saved to file successfully.");
+            System.out.println("Factory saved to file successfully: " + factory.getFactoryName());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -176,6 +172,7 @@ public class FactoryDAO {
                 factory.setChocolates(chocolateDAO.findChocolatesByFactoryId(id).stream().collect(Collectors.toList()));
 
                 factories.put(id, factory);  
+                System.out.println("Factory loaded: " + factory.getFactoryName());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -190,6 +187,22 @@ public class FactoryDAO {
         }
     }
 
+    public Factory addEmployeeToFactory(String factoryId, User employee) {
+        Factory factory = factories.get(factoryId);
+        if (factory != null) {
+            List<User> employees = factory.getEmployees();
+            if (employees == null) {
+                employees = new ArrayList<>();
+            }
+            employee.setRole(Role.EMPLOYEE);
+            employees.add(employee);
+            factory.setEmployees(employees);
+            factories.put(factoryId, factory); 
+            saveFactories(); 
+            return factory;
+        }
+        return null;
+    }
 
     public Collection<Factory> findAllAndSort() {
         return factories.values().stream()
@@ -205,7 +218,6 @@ public class FactoryDAO {
             averageGrade = Double.parseDouble(search);
             isAverageGrade = true;
         } catch (NumberFormatException e) {
-            // Ignoriši grešku jer to znači da nije prosečna ocena
         }
 
         final double finalAverageGrade = averageGrade;
@@ -216,7 +228,6 @@ public class FactoryDAO {
                     boolean matchesLocation = search != null && !search.isEmpty() && (factory.getLocation().getCity().toLowerCase().contains(search.toLowerCase()) || factory.getLocation().getCountry().toLowerCase().contains(search.toLowerCase()));
                     boolean matchesAverageGrade = finalIsAverageGrade && factory.getGrade() >= finalAverageGrade;
 
-                    // Provera naziva čokolada
                     boolean matchesChocolateName = search != null && !search.isEmpty() && factory.getChocolates().stream()
                             .anyMatch(chocolate -> chocolate.getChocolateName().toLowerCase().contains(search.toLowerCase()));
 
@@ -228,7 +239,6 @@ public class FactoryDAO {
                 })
                 .collect(Collectors.toList());
     }
-
 
     public Collection<Factory> sortFactories(String sortBy, boolean ascending) {
         Comparator<Factory> comparator;
@@ -278,44 +288,25 @@ public class FactoryDAO {
         return locationDAO;
     }
     
-    // Metoda koja vraća ID menadžera koji već imaju fabrike
     public List<String> getManagersWithFactories() {
         return factories.values().stream()
-                .filter(factory -> factory.getUser() != null) // Dodata provera da li je user null
+                .filter(factory -> factory.getUser() != null)
                 .map(factory -> factory.getUser().getId())
                 .distinct()
                 .collect(Collectors.toList());
     }
 
-    // Metoda koja vraća menadžere koji nemaju dodeljene fabrike
     public List<User> findUnassignedManagers() {
         List<String> assignedManagerIds = getManagersWithFactories();
         return userDAO.findAll().stream()
             .filter(user -> user.getRole() == Role.MANAGER && !assignedManagerIds.contains(user.getId()))
             .collect(Collectors.toList());
     }
-    
+
     public Collection<Factory> findFactoriesByUserId(String userId) {
         return factories.values().stream()
                 .filter(factory -> factory.getUser() != null && factory.getUser().getId().equals(userId))
                 .collect(Collectors.toList());
-    }
-    
-    
-    public Factory addEmployeeToFactory(String factoryId, User employee) {
-        Factory factory = factories.get(factoryId);
-        if (factory != null) {
-            List<User> employees = factory.getEmployees();
-            if (employees == null) {
-                employees = new ArrayList<>();
-            }
-            employee.setRole(Role.EMPLOYEE);
-            employees.add(employee);
-            factory.setEmployees(employees);
-            saveFactories(); // Save factories to file after updating employees
-            return factory;
-        }
-        return null;
     }
 
     public Factory findFactoryByUserId(String userId) {
@@ -330,12 +321,4 @@ public class FactoryDAO {
         }
         return null;
     }
-
-
-    
-   
-
-    
-    
-
 }

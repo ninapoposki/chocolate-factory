@@ -190,6 +190,8 @@ public class ChocolateService {
 	         int quantity = jsonObject.getInt("numberOfChocolates");
 
 	         chocolate.setNumberOfChocolates(quantity);
+	         chocolate.setIsActive(true);
+	         chocolate.setIsOnStock(true);
 	         dao.updateChocolate(id, chocolate);
 	         return Response.ok(chocolate).build();
 	     } catch (JsonException | NumberFormatException e) {
