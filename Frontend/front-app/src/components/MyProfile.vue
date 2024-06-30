@@ -40,8 +40,35 @@
       </div>
     </div>
 
-    <div v-if="user.role === 'CUSTOMER'" class="purchase-content"> 
+    <div v-if="user.role === 'CUSTOMER'" class="purchase-content">
       <h2>YOUR PURCHASES</h2>
+      
+      <!-- Polja za pretragu i sortiranje -->
+      <div class="search-sort">
+        <input type="text" v-model="searchFactoryName" placeholder="Search by Factory Name">
+        <input type="number" v-model="minPrice" placeholder="Min Price">
+        <input type="number" v-model="maxPrice" placeholder="Max Price">
+        <input type="date" v-model="startDate" placeholder="Start Date">
+        <input type="date" v-model="endDate" placeholder="End Date">
+        <div class="sort-order">
+          <select v-model="sortBy">
+            <option disabled value="">Sort By</option>
+            <option value="factoryname">Factory Name</option>
+            <option value="price">Price</option>
+            <option value="date">Date</option>
+          </select>
+          <select v-model="ascending">
+            <option disabled value="">Order</option>
+            <option value="true">Ascending</option>
+            <option value="false">Descending</option>
+          </select>
+        </div>
+        <div class="action-buttons">
+          <button @click="searchAndSortPurchasesByUser">Search and Sort</button>
+          <button @click="resetSearchAndSort">Reset</button>
+        </div>
+      </div>
+      
       <table>
         <thead>
           <tr>
@@ -57,7 +84,7 @@
           <tr v-for="purchase in purchases" :key="purchase.code">
             <td>{{ purchase.code }}</td>
             <td>{{ getChocolateNames(purchase.chocolates).join(', ') }}</td>
-            <td>{{  }}</td>
+            <td>{{ purchase.chocolates.length }}</td>
             <td>{{ formatDate(purchase.dateAndTime) }}</td>
             <td>{{ purchase.price.toFixed(2) }}din</td>
             <td>{{ purchase.status }}</td>
@@ -102,6 +129,69 @@
         </tbody>
       </table>
       <button class="navigate-add-employee" @click="navigateToAddEmployee">Add Employee</button>
+      
+      <h2>FACTORY PURCHASES</h2>
+      
+      <!-- Polja za pretragu i sortiranje -->
+      <div class="search-sort">
+        <input type="number" v-model="minPrice" placeholder="Min Price">
+        <input type="number" v-model="maxPrice" placeholder="Max Price">
+        <input type="date" v-model="startDate" placeholder="Start Date">
+        <input type="date" v-model="endDate" placeholder="End Date">
+        <div class="sort-order">
+          <select v-model="sortBy">
+            <option disabled value="">Sort By</option>
+            <option value="price">Price</option>
+            <option value="date">Date</option>
+          </select>
+          <select v-model="ascending">
+            <option disabled value="">Order</option>
+            <option value="true">Ascending</option>
+            <option value="false">Descending</option>
+          </select>
+        </div>
+        <div class="action-buttons">
+          <button @click="searchAndSortFactoryPurchases">Search and Sort</button>
+          <button @click="resetSearchAndSort">Reset</button>
+        </div>
+      </div>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Chocolates</th>
+            <th>Quantity</th>
+            <th>Date and Time</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="purchase in factoryPurchases" :key="purchase.id">
+            <td>{{ purchase.code }}</td>
+            <td>{{ getChocolateNames(purchase.chocolates).join(', ') }}</td>
+            <td>{{ purchase.chocolates.length }}</td>
+            <td>{{ formatDate(purchase.dateAndTime) }}</td>
+            <td>{{ purchase.price.toFixed(2) }}din</td>
+            <td>{{ purchase.status }}</td>
+            <td>
+              <button @click="toggleChangeRequest(purchase)">Change Request</button>
+              <div v-if="purchase.showChangeRequest">
+                <select v-model="purchase.newStatus">
+                  <option value="ACCEPTED">Accept</option>
+                  <option value="DECLINED">Decline</option>
+                </select>
+                <div v-if="purchase.newStatus === 'DECLINED'">
+                  <input type="text" v-model="purchase.commentText" placeholder="Enter comment" />
+                </div>
+                <button @click="submitChangeRequest(purchase)">Submit</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <div v-if="user.role === 'EMPLOYEE' && employeeFactory" class="factory-info">
@@ -139,8 +229,7 @@
           </tr>
         </tbody>
       </table>
-      <button   class="navigate-add-employee" @click="ShowDetails(employeeFactory.id)">Show details</button>
-
+      <button class="navigate-add-employee" @click="ShowDetails(employeeFactory.id)">Show details</button>
     </div>
   </div>
 </template>
@@ -154,11 +243,18 @@ const router = useRouter();
 const { ref, computed, onMounted } = require('vue');  
 const purchases = ref([]);
 const chocolates = ref([]);
+const factoryPurchases = ref([]);
 const userRole = ref('');
 const username = ref('');
 const managerFactory = ref(null); 
-const employeeFactory = ref(null); // Dodato za fabriku zaposlenog
-
+const employeeFactory = ref(null);
+const searchFactoryName = ref('');
+const minPrice = ref(null);
+const maxPrice = ref(null);
+const startDate = ref('');
+const endDate = ref('');
+const sortBy = ref(''); 
+const ascending = ref(true);
 
 const editable = ref(false);
 const user = ref({
@@ -171,7 +267,6 @@ const user = ref({
   password: ''
 });
 
-
 const formatDate = (date) => {
   return new Date(date).toLocaleString('en-US', {
     year: 'numeric',
@@ -182,13 +277,69 @@ const formatDate = (date) => {
   });
 };
 
+const searchAndSortFactoryPurchases = () => {
+  const factoryId = managerFactory.value.id;
+  const params = {};
+
+  if (minPrice.value !== null) params.minPrice = minPrice.value;
+  if (maxPrice.value !== null) params.maxPrice = maxPrice.value;
+  if (startDate.value) params.startDate = new Date(startDate.value).toISOString(); 
+  if (endDate.value) params.endDate = new Date(endDate.value).toISOString(); 
+  if (sortBy.value) params.sortBy = sortBy.value;
+  params.ascending = ascending.value;
+
+  axios.get(`http://localhost:8080/WebShopAppREST/rest/purchases/search/${factoryId}`, { params })
+    .then(response => {
+      factoryPurchases.value = response.data;
+    })
+    .catch(error => {
+      console.error('Error fetching factory purchases:', error);
+    });
+};
+
+const searchAndSortPurchasesByUser = () => {
+  const userId = user.value.id;
+  const params = {};
+
+  if (searchFactoryName.value) params.factoryName = searchFactoryName.value;
+  if (minPrice.value !== null) params.minPrice = minPrice.value;
+  if (maxPrice.value !== null) params.maxPrice = maxPrice.value;
+  if (startDate.value) params.startDate = new Date(startDate.value).toISOString(); 
+  if (endDate.value) params.endDate = new Date(endDate.value).toISOString(); 
+  if (sortBy.value) params.sortBy = sortBy.value;
+  params.ascending = ascending.value;
+
+  axios.get(`http://localhost:8080/WebShopAppREST/rest/purchases/searchTwo/${userId}`, { params })
+    .then(response => {
+      purchases.value = response.data;
+    })
+    .catch(error => {
+      console.error('Error fetching user purchases:', error);
+    });
+};
+
+const resetSearchAndSort = () => {
+  searchFactoryName.value = '';
+  minPrice.value = null;
+  maxPrice.value = null;
+  startDate.value = '';
+  endDate.value = '';
+  sortBy.value = '';
+  ascending.value = true;
+
+  if (user.value.role === 'CUSTOMER') {
+    fetchPurchasesByUserId(user.value.id);
+  } else if (user.value.role === 'MANAGER') {
+    fetchFactoryPurchases(managerFactory.value.id);
+  }
+};
 
 const getChocolateNames = (chocolateIds) => {
   return chocolateIds.map(id => {
     const chocolate = chocolates.value.find(choco => choco.id === id);
     return chocolate ? chocolate.chocolateName : `Unknown Chocolate (${id})`;
   });
-}
+};
 
 const getUserIdFromLocalStorage = () => {
   const cookies = document.cookie.split(';').map(cookie => cookie.trim());
@@ -199,10 +350,8 @@ const getUserIdFromLocalStorage = () => {
   return null;
 };
 
-
 const fetchUser = () => {
   const userId = getUserIdFromLocalStorage();
-  console.log(userId);
   if (userId && userId !== '-1') {
     axios.get(`http://localhost:8080/WebShopAppREST/rest/users/${userId}`)
       .then(response => {
@@ -211,6 +360,8 @@ const fetchUser = () => {
           fetchManagerFactory(userId); 
         } else if (user.value.role === 'EMPLOYEE') {
           fetchEmployeeFactory(userId); 
+        } else if (user.value.role === 'CUSTOMER') {
+          fetchPurchasesByUserId(userId);
         }
       })
       .catch(error => {
@@ -228,6 +379,7 @@ const fetchManagerFactory = (userId) => {
     .then(response => {
       if (response.data.length > 0) {
         managerFactory.value = response.data[0];
+        fetchFactoryPurchases(managerFactory.value.id);
       }
     })
     .catch(error => {
@@ -247,8 +399,27 @@ const fetchEmployeeFactory = (userId) => {
     });
 };
 
+const fetchFactoryPurchases = (factoryId) => {
+  axios.get(`http://localhost:8080/WebShopAppREST/rest/purchases/factory/${factoryId}`)
+    .then(response => {
+      factoryPurchases.value = response.data;
+    })
+    .catch(error => {
+      console.error('Error fetching factory purchases:', error);
+    });
+};
+
+const fetchPurchasesByUserId = (userId) => {
+  axios.get(`http://localhost:8080/WebShopAppREST/rest/purchases/user/${userId}`)
+    .then(response => {
+      purchases.value = response.data;
+    })
+    .catch(error => {
+      console.error('Error fetching purchases:', error);
+    });
+};
+
 const userImage = 'https://t4.ftcdn.net/jpg/05/50/60/55/360_F_550605549_PaTP81pjaCsrNTnfUaYlUZ8wmPpQSHY8.jpg';
-//const maskedPassword = user.value.password.replace(/./g, '•');  // Primer za maskiranje lozinke
 const maskedPassword = computed(() => {
   return user.value.password.replace(/./g, '•');
 });
@@ -268,30 +439,16 @@ const toggleEdit = () => {
   editable.value = !editable.value;
 };
 
-const fetchPurchasesByUserId = () => {
-  const userId = getUserIdFromLocalStorage();
-  if (userId && userId !== '-1') {
-    axios.get(`http://localhost:8080/WebShopAppREST/rest/purchases/user/${userId}`)
-      .then(response => {
-        purchases.value = response.data;
-      })
-      .catch(error => {
-        console.error('Error fetching purchases:', error);
-      });
-  }
-};
-
-
-
 const fetchChocolateInfo = () => {
   return axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates`)
     .then(response => {
-      chocolates.value = response.data;  // Pretpostavljamo da API vraća niz objekata sa informacijama o čokoladama
+      chocolates.value = response.data;
     })
     .catch(error => {
       console.error('Error fetching chocolate info:', error);
     });
 };
+
 const getUserRoleFromCookie = () => {
   const cookies = document.cookie.split(';').map(cookie => cookie.trim());
   const userRoleCookie = cookies.find(cookie => cookie.startsWith('userRole='));
@@ -309,6 +466,7 @@ const getUsernameFromCookie = () => {
   }
   return null;
 };
+
 const navigateToAddEmployee = () => {
   if (managerFactory.value && managerFactory.value.id) {
     router.push({ name: 'addEmployee', params: { factoryId: managerFactory.value.id } });
@@ -316,11 +474,40 @@ const navigateToAddEmployee = () => {
     alert("Factory ID not found");
   }
 };
+
 const ShowDetails = (id) => {
   router.push(`/details/${id}`);
-
 };
 
+// New methods and variables
+const toggleChangeRequest = (purchase) => {
+  purchase.showChangeRequest = !purchase.showChangeRequest;
+  if (!purchase.showChangeRequest) {
+    purchase.newStatus = null;
+    purchase.commentText = '';
+  }
+};
+
+const submitChangeRequest = (purchase) => {
+  const requestData = {
+    status: purchase.newStatus,
+  };
+
+  if (purchase.newStatus === 'DECLINED') {
+    requestData.commentText = purchase.commentText;
+    requestData.userId = getUserIdFromLocalStorage();
+  }
+
+  axios.put(`http://localhost:8080/WebShopAppREST/rest/purchases/status/${purchase.id}`, requestData)
+    .then(response => {
+      console.log('Purchase status updated:', response.data);
+      purchase.status = response.data.status;
+      purchase.showChangeRequest = false; // Close the change request form
+    })
+    .catch(error => {
+      console.error('Error updating purchase status:', error);
+    });
+};
 
 onMounted(() => {
   fetchUser();
@@ -328,7 +515,6 @@ onMounted(() => {
   fetchChocolateInfo();
 });
 </script>
-
 
 <style scoped>
 .background {
@@ -384,7 +570,7 @@ button {
 }
 
 .navigate-add-employee {
-  background-color: #36a372; /* Zelena boja */
+  background-color: #36a372;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -394,12 +580,12 @@ button {
 }
 
 .navigate-add-employee:hover {
-  background-color: #36a372; /* Tamnija zelena za hover efekat */
+  background-color: #2b8659;
 }
 
 .user-info {
-  text-align: left; /* Tekst u user-info je poravnat levo */
-  padding-left: 20px; /* Dati neki padding za razmak od leve ivice */
+  text-align: left;
+  padding-left: 20px;
 }
 
 .purchase-content {
@@ -410,6 +596,36 @@ button {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   margin-left: 15px;
   margin-top: 30px;
+}
+
+.search-sort {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.search-sort input,
+.search-sort select {
+  padding: 5px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+}
+
+.search-sort .sort-order select {
+  margin-right: 10px; 
+}
+.search-sort .action-buttons button {
+  margin-right: 10px; 
+}
+
+.search-sort button {
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  background-color: #36a372;
+  color: white;
 }
 
 .purchase-info {
@@ -459,21 +675,21 @@ button {
 }
 
 .narrow-column {
-  width: 10%; /* Adjust this width as needed */
+  width: 10%;
 }
 
 .location-column {
-  width: 40%; /* Adjust this width as needed */
+  width: 40%;
 }
 
 .location-info {
   display: flex;
-  align-items: center; 
+  align-items: center;
 }
 
 .address {
-  text-align: left; 
-  margin-left: 10px; 
+  text-align: left;
+  margin-left: 10px;
 }
 
 .map {
@@ -486,5 +702,25 @@ button {
   max-width: 100px;
   height: auto;
 }
-</style>
 
+.factory-info select,
+.factory-info input[type="text"] {
+  margin-top: 5px;
+  padding: 5px;
+  width: calc(100% - 10px);
+  box-sizing: border-box;
+}
+
+.factory-info button {
+  margin-top: 5px;
+  padding: 5px;
+  background-color: #36a372;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.factory-info button:hover {
+  background-color: #2b8659;
+}
+</style>

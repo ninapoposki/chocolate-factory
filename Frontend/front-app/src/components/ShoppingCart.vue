@@ -63,6 +63,7 @@ const userId = ref(null);
 const userName = ref({ firstName: '', lastName: '' });
 const carts = ref([]);
 const editableQuantities = ref({});
+const chocolateId= ref('');
 
 const getUserIdFromLocalStorage = () => {
   const cookies = document.cookie.split(';').map(cookie => cookie.trim());
@@ -76,6 +77,7 @@ const getUserIdFromLocalStorage = () => {
 async function fetchChocolates(chocolateIds) {
   const requests = chocolateIds.map((id) => {
     console.log(`Preuzimam čokoladu sa ID: ${id}`);
+    chocolateId.value = id;
     return axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates/choco/${id}`);
   });
 
@@ -149,6 +151,7 @@ function extractChocolateQuantities(shoppingCarts) {
 
 async function fetchChocolatesWithQuantities(chocolateIds, quantities) {
   const requests = chocolateIds.map((id) => {
+    chocolateId.value = id;
     return axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates/choco/${id}`);
   });
 
@@ -165,7 +168,17 @@ async function fetchChocolatesWithQuantities(chocolateIds, quantities) {
   }
 }
 
-
+async function fetchFactoryId(chocolateId) {
+  try {
+    const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates/factory/${chocolateId}`);
+    console.log("proba");
+    console.log(response.data);
+    return response.data; // Assuming the endpoint returns an object with the factoryId
+  } catch (error) {
+    console.error(`Error fetching factory ID for chocolate ID: ${chocolateId}`, error);
+    return null;
+  }
+}
 
 onMounted(async () => {
   userId.value = getUserIdFromLocalStorage();
@@ -254,7 +267,14 @@ async function goToCheckout() {
       purchaseCode = generateRandomCode();
     } while (existingCodes.includes(purchaseCode));
 
-   
+    const firstChocolateId = chocolates.value.length ? chocolates.value[0].id : null;
+    let factoryId = null;
+
+    if (firstChocolateId) {
+      factoryId = await fetchFactoryId(firstChocolateId);
+      console.log(`Factory ID for chocolate ID ${firstChocolateId}: ${factoryId}`);
+    }
+
 
    
    // const shoppingCartIds = carts.value.map(cart => cart.id);
@@ -267,6 +287,7 @@ async function goToCheckout() {
       chocolates: shoppingCartIds,
       dateAndTime: new Date(),
       price: totalPrice.value,
+      factoryId: factoryId,
       customerId: userId.value,
       customerFirstName: userName.value.firstName,
       customerLastName: userName.value.lastName,
@@ -276,7 +297,7 @@ async function goToCheckout() {
     const response = await axios.post('http://localhost:8080/WebShopAppREST/rest/purchases', purchase);
     console.log('Kupovina kreirana:', response.data);
     // Nakon uspešne kupovine, možete preusmeriti korisnika na stranicu za potvrdu ili status kupovine
-    router.push('/confirmation');
+    router.push('/profile');
   } catch (error) {
     console.error('Greška prilikom kreiranja kupovine:', error);
   }
