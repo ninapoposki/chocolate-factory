@@ -273,6 +273,13 @@ public class ChocolateDAO {
 	            .collect(Collectors.toSet());
 	}
 
+	public String findFactoryIdByChocolateId(String chocolateId) {
+	    Chocolate chocolate = chocolates.get(chocolateId);
+	    if (chocolate != null) {
+	        return chocolate.getFactory().getId();
+	    }
+	    return null;
+	}
 	
 
 }

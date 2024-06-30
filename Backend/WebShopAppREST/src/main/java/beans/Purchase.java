@@ -25,7 +25,7 @@ public class Purchase{
 	public Purchase() {}
 	
 	public Purchase(String id, String code, List<Integer> chocolates, OffsetDateTime dateAndTime, double price,
-			int customerId, String customerFirstName, String customerLastName, PurchaseStatus status) {
+			int customerId, String customerFirstName, String customerLastName, PurchaseStatus status, int factoryId) {
 		super();
 		this.id = id;
 		this.code = code;
@@ -36,9 +36,18 @@ public class Purchase{
 		this.customerFirstName = customerFirstName;
 		this.customerLastName = customerLastName;
 		this.status = status;
+		this.factoryId = factoryId;
 	}
 	
 	
+
+	public int getFactoryId() {
+		return factoryId;
+	}
+
+	public void setFactoryId(int factoryId) {
+		this.factoryId = factoryId;
+	}
 
 	public String getId() {
 		return id;

@@ -98,7 +98,7 @@ public class PurchaseDAO {
 	        
 	        out.write(purchase.getId() + "," + purchase.getCode() + "," + chocolateIds.toString() + "," +                     formattedDateAndTime + "," +
 	                purchase.getPrice() + "," + purchase.getCustomerId() + "," + purchase.getCustomerFirstName() + "," +
-	                purchase.getCustomerLastName() + "," + purchase.getStatus().toString() + "\n");
+	                purchase.getCustomerLastName() + "," + purchase.getStatus().toString() + "," + purchase.getFactoryId()+ "\n");
 
 	        out.flush();
 	        out.close();
@@ -132,7 +132,7 @@ public class PurchaseDAO {
 
 	            String[] data = parseCsvLine(line);
 
-	           // String factoryId = data[3].trim();
+	            String factoryId = data[9].trim();
 	            //  Factory factory = factoryDAO.findFactory(factoryId);
 
 
@@ -147,7 +147,7 @@ public class PurchaseDAO {
 	            purchase.setId(data[0]);
 	            purchase.setCode(data[1]);
 	            purchase.setChocolates(chocolates);
-	       //     purchase.setFactoryId(Integer.parseInt(factoryId));
+	            purchase.setFactoryId(Integer.parseInt(factoryId));
 	            
 
 	           // purchase.setDateAndTime(new Date(Long.parseLong(data[3])));
@@ -185,7 +185,43 @@ public class PurchaseDAO {
 	                .filter(purchase -> purchase.getCustomerId() == customerId)
 	                .collect(Collectors.toList());
 	    }
+	  public Purchase updatePurchaseStatus(String id, PurchaseStatus status) {
+	        Purchase p = purchases.containsKey(id) ? purchases.get(id) : null;
+	        if (p != null) {
+	            p.setStatus(status);
+	            purchases.put(id, p); 
+	            rewriteFile();
+	        }
+	        return p;
+	    }
 	
+	  private void rewriteFile() {
+		    try {
+		        Path filePath = Paths.get(contextPath + "/purchases.csv");
+		        BufferedWriter out = new BufferedWriter(new FileWriter(filePath.toString(), false)); // false za prepisivanje fajla
+
+		        for (Purchase purchase : purchases.values()) {
+		            StringBuilder chocolateIds = new StringBuilder();
+		            for (Integer chocolate : purchase.getChocolates()) {
+		                chocolateIds.append(chocolate).append("|");
+		            }
+
+		            String formattedDateAndTime = purchase.getDateAndTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+
+		            out.write(purchase.getId() + "," + purchase.getCode() + "," + chocolateIds.toString() + "," + formattedDateAndTime + "," +
+		                    purchase.getPrice() + "," + purchase.getCustomerId() + "," + purchase.getCustomerFirstName() + "," +
+		                    purchase.getCustomerLastName() + "," + purchase.getStatus().toString() + "," + purchase.getFactoryId() + "\n");
+		        }
+
+		        out.flush();
+		        out.close();
+		        System.out.println("Purchases file rewritten successfully.");
+		    } catch (Exception e) {
+		        e.printStackTrace();
+		    }
+		}
+
+	  
 	private String[] parseCsvLine(String line) {
 	    List<String> tokens = new ArrayList<>();
 	    StringBuilder currentToken = new StringBuilder();

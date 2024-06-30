@@ -190,6 +190,11 @@ public class ChocolateService {
 	         int quantity = jsonObject.getInt("numberOfChocolates");
 
 	         chocolate.setNumberOfChocolates(quantity);
+	         chocolate.setIsOnStock(true);
+	         if(quantity == 0) {
+	        	 chocolate.setIsOnStock(false);
+	         }
+	         
 	         dao.updateChocolate(id, chocolate);
 	         return Response.ok(chocolate).build();
 	     } catch (JsonException | NumberFormatException e) {
@@ -199,6 +204,16 @@ public class ChocolateService {
 
 	 
 	
-	 
+	 @GET
+	 @Path("/factory/{chocolateId}")
+	 @Produces(MediaType.APPLICATION_JSON)
+	 public Response getFactoryIdByChocolateId(@PathParam("chocolateId") String chocolateId) {
+	     ChocolateDAO dao = (ChocolateDAO) ctx.getAttribute("chocolateDAO");
+	     String factoryId = dao.findFactoryIdByChocolateId(chocolateId);
+	     if (factoryId == null) {
+	         return Response.status(Response.Status.NOT_FOUND).entity("Factory not found for given chocolate ID").build();
+	     }
+	     return Response.ok(factoryId).build();
+	 }
 
 }

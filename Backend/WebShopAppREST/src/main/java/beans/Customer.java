@@ -22,13 +22,14 @@ public class Customer extends User {
     }
 
     public Customer(User user, List<Purchase> purchases, ShoppingCart cart, int loyaltyPoints, CustomerType customerType, int discount, int requiredPoints) {
-        super(user.getId(), user.getUsername(), user.getPassword(), user.getFirstName(), user.getLastName(), user.getGender(), user.getDateOfBirth(), user.getRole());
+        super(user.getId(), user.getUsername(), user.getPassword(), user.getFirstName(), user.getLastName(), user.getGender(), user.getDateOfBirth(), user.getRole(), user.getPoints());
         this.purchases = purchases;
         this.cart = cart;
         this.loyaltyPoints = loyaltyPoints;
         this.customerType = customerType;
         this.discount = discount;
         this.requiredPoints = requiredPoints;
+        
     }
 
     public List<Purchase> getPurchases() {

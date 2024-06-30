@@ -1,7 +1,9 @@
 package services;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
@@ -95,5 +97,34 @@ public class ShoppingCartService {
         ShoppingCartDAO dao = (ShoppingCartDAO) ctx.getAttribute("shoppingCartDAO");
         dao.changeChocolateQuantity(itemDTO);
         return Response.ok().build();
+    }
+    
+    @GET
+    @Path("/quantity/{cartId}/{chocolateId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getChocolateQuantity(@PathParam("cartId") String cartId, @PathParam("chocolateId") int chocolateId) {
+        ShoppingCartDAO dao = (ShoppingCartDAO) ctx.getAttribute("shoppingCartDAO");
+        int quantity = dao.findChocolateQuantity(cartId, chocolateId);
+        if (quantity != -1) {
+            return Response.ok(quantity).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("Chocolate quantity not found").build();
+        }
+    }
+
+    
+  
+    
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getShoppingCartById(@PathParam("id") String id) {
+        ShoppingCartDAO dao = (ShoppingCartDAO) ctx.getAttribute("shoppingCartDAO");
+        ShoppingCart shoppingCart = dao.findShoppingCart(id);
+        if (shoppingCart != null) {
+            return Response.ok(shoppingCart).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
     }
 }

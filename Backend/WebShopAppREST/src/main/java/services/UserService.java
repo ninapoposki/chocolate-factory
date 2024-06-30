@@ -73,6 +73,7 @@ public class UserService {
         user.setGender(dto.getGender());
         user.setDateOfBirth(dto.getDateOfBirth());
         user.setRole(Role.CUSTOMER);
+        user.setPoints(0);
         
         User savedUser = dao.save(user);
         
@@ -264,6 +265,7 @@ public class UserService {
         user.setGender(dto.getGender());
         user.setDateOfBirth(dto.getDateOfBirth());
         user.setRole(Role.MANAGER);
+        user.setPoints(0);
         
         User savedUser = dao.save(user);
         

@@ -30,12 +30,20 @@
           </template>
           <template v-else>{{ user.username }}</template>
         </div>
-        <div style="padding-top: 10px; padding-bottom: 10px;"><strong>Password:</strong>
+        <div style="padding-top: 10px;"><strong>Password:</strong>
           <template v-if="editable">
             <input type="password" v-model="user.password" />
           </template>
           <template v-else>{{ maskedPassword }}</template>
         </div>
+        <div style="padding-top: 10px; padding-bottom: 10px;"><strong>Your points:</strong> {{ user.points }}
+        </div>
+        <div style="padding-top: 10px; padding-bottom: 10px;">
+         <strong>Your medal:</strong> {{ userPointsStatus }}
+         </div>
+         <div style="padding-top: 10px; padding-bottom: 10px;">
+         <i>  {{ message }}</i>
+         </div>
         <button @click="toggleEdit">{{ editable ? 'Save' : 'Edit' }}</button>
       </div>
     </div>
@@ -51,16 +59,19 @@
             <th>Date and Time</th>
             <th>Price</th>
             <th>Status</th>
+           
           </tr>
         </thead>
         <tbody>
           <tr v-for="purchase in purchases" :key="purchase.code">
             <td>{{ purchase.code }}</td>
-            <td>{{ getChocolateNames(purchase.chocolates).join(', ') }}</td>
-            <td>{{  }}</td>
+            <td v-html="purchase.chocolateNames.join('<br>')"></td>
+            <td>{{ }}</td>
             <td>{{ formatDate(purchase.dateAndTime) }}</td>
             <td>{{ purchase.price.toFixed(2) }}din</td>
             <td>{{ purchase.status }}</td>
+            <td><button v-if="purchase.status === 'PROCESSING'" @click="cancelOrder(purchase.id)">Cancel Order</button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -168,9 +179,31 @@ const user = ref({
   role: '',
   dateOfBirth: '',
   username: '',
-  password: ''
+  password: '',
+  points:''
 });
 
+const userPointsStatus = computed(() => {
+  const points = user.value.points;
+  if (points < 3000) {
+    return 'BRONZE';
+  } else if (points >= 3000 && points < 5000) {
+    return 'SILVER';
+  } else {
+    return 'GOLDEN';
+  }
+});
+
+const message = computed(() => {
+  const points = user.value.points;
+  if (points < 3000) {
+    return 'Make more purchases to get 3000 points and get -3% sale';
+  } else if (points >= 3000 && points < 5000) {
+    return 'Currently you have -3% sale.Make more purchases to get 5000 points and get -5% sale';
+  } else {
+    return 'You are our golden user and you have -5% sale for any item';
+  }
+});
 
 const formatDate = (date) => {
   return new Date(date).toLocaleString('en-US', {
@@ -181,14 +214,45 @@ const formatDate = (date) => {
     minute: '2-digit',
   });
 };
+const getChocolateNamesFromCartIds = async (cartIds) => {
+  const names = [];
+  const quantities = [];
 
+  for (const cartId of cartIds) {
+    try {
+      const cartResponse = await axios.get(`http://localhost:8080/WebShopAppREST/rest/shoppingCarts/${cartId}`);
+      const cartData = cartResponse.data;
+      //quantities.push(cartData.chocolateResponse.quantity);
+      for (const chocolateId  of Object.keys(cartData.chocolates)) {
+        try {
+          const chocolateResponse = await axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates/choco/${chocolateId}`);
+          names.push(chocolateResponse.data.chocolateName);
+          //quantities.push(quantity);
+        } catch (error) {
+          console.error(`Error fetching chocolate with ID: ${chocolateId}`, error);
+          names.push(`Unknown Chocolate (${chocolateId})`);
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching shopping cart with ID: ${cartId}`, error);
+    }
+  }
 
-const getChocolateNames = (chocolateIds) => {
-  return chocolateIds.map(id => {
-    const chocolate = chocolates.value.find(choco => choco.id === id);
-    return chocolate ? chocolate.chocolateName : `Unknown Chocolate (${id})`;
-  });
-}
+  return names;
+};
+
+const fetchChocolateNames = async (chocolateIds) => {
+  const chocolateNames = await Promise.all(chocolateIds.map(async (id) => {
+    try {
+      const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates/choco/${id}`);
+      return response.data.chocolateName;  // Pretpostavljam da odgovor sadrži polje 'name'
+    } catch (error) {
+      console.error('Error fetching chocolate name:', error);
+      return `Unknown Chocolate (${id})`;
+    }
+  }));
+  return chocolateNames;
+};
 
 const getUserIdFromLocalStorage = () => {
   const cookies = document.cookie.split(';').map(cookie => cookie.trim());
@@ -249,8 +313,11 @@ const fetchEmployeeFactory = (userId) => {
 
 const userImage = 'https://t4.ftcdn.net/jpg/05/50/60/55/360_F_550605549_PaTP81pjaCsrNTnfUaYlUZ8wmPpQSHY8.jpg';
 //const maskedPassword = user.value.password.replace(/./g, '•');  // Primer za maskiranje lozinke
+/*const maskedPassword = computed(() => {
+  return user.value.password.replace(/./g, '•') : '';
+});*/
 const maskedPassword = computed(() => {
-  return user.value.password.replace(/./g, '•');
+  return user.value.password ? user.value.password.replace(/./g, '•') : '';
 });
 
 const toggleEdit = () => {
@@ -268,20 +335,44 @@ const toggleEdit = () => {
   editable.value = !editable.value;
 };
 
+const fetchShoppingCartById = async (cartIds) => {
+  try {
+    for (const cartId of cartIds) {
+    const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/shoppingCarts/${cartId}`);
+    if (response.data && response.data.items) {
+      const quantities = response.data.items.map(item => item.quantity);
+      return quantities; 
+    }
+  }
+  } catch (error) {
+    console.error(`Error fetching shopping cart with ID: ${cartId}`, error);
+    return null;
+  }
+};
+
 const fetchPurchasesByUserId = () => {
   const userId = getUserIdFromLocalStorage();
   if (userId && userId !== '-1') {
     axios.get(`http://localhost:8080/WebShopAppREST/rest/purchases/user/${userId}`)
       .then(response => {
-        purchases.value = response.data;
+        const purchaseData = response.data;
+        Promise.all(purchaseData.map(purchase => {
+          return getChocolateNamesFromCartIds(purchase.chocolates).then(names => {
+            purchase.chocolateNames = names;
+       
+             
+            return purchase;
+          
+          });
+        })).then(updatedPurchases => {
+          purchases.value = updatedPurchases;
+        });
       })
       .catch(error => {
         console.error('Error fetching purchases:', error);
       });
   }
 };
-
-
 
 const fetchChocolateInfo = () => {
   return axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates`)
@@ -319,6 +410,67 @@ const navigateToAddEmployee = () => {
 const ShowDetails = (id) => {
   router.push(`/details/${id}`);
 
+};
+
+
+const cancelOrder = async (purchaseId) => {
+  try {
+    const response = await axios.put(`http://localhost:8080/WebShopAppREST/rest/purchases/cancel/${purchaseId}`);
+    console.log('Order cancelled successfully:', response.data);
+    
+    // Ažurirajte status kupovine u lokalnoj listi
+    const purchase = purchases.value.find(p => p.id === purchaseId);
+    if (purchase) {
+      purchase.status = 'CANCELLED';
+    }
+
+    // Preuzmite korisnika za ažuriranje
+    const userResponse = await fetchUserForUpdate(purchase.customerId);
+    console.log('Fetched user:', user);
+
+    if (userResponse) {
+      // Ažuriranje bodova korisnika
+      userResponse.points = userResponse.points - (purchase.price / 1000 * 133 * 4);
+      if(userResponse.points<0){
+        userResponse.points = 0;
+        
+      }
+      const updatedUser = await updateUser(purchase.customerId, userResponse);
+      console.log('Updated user:', updatedUser);
+
+      user.value.points = updatedUser.points;
+
+      //user.value.points = userResponse.points - (purchase.price / 1000 * 133 * 4);
+      //console.log('Updated user points:', user.value.points);
+      //user.points = user.points - (purchase.price / 1000 * 133 * 4);
+      //const updatedUser = await updateUser(purchase.customerId, user);
+      //console.log('Updated user:', updatedUser);
+    }
+  } catch (error) {
+    console.error('Error cancelling order:', error);
+  }
+};
+
+async function fetchUserForUpdate(userId) {
+  try {
+    console.log('Fetching user with ID:', userId);
+    const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/users/${userId}`);
+    console.log('Fetched user data:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching user with ID: ${userId}`, error);
+    return null;
+  }
+}
+
+async function updateUser(userId, updatedUser) {
+  try {
+    const response = await axios.put(`http://localhost:8080/WebShopAppREST/rest/users/update/${userId}`, updatedUser);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating user with ID: ${userId}`, error);
+    return null;
+  }
 };
 
 

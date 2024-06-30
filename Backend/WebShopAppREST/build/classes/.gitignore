@@ -1,8 +1,6 @@
+/beans/
+/dao/
+/dto/
+/enumerations/
 /services/
-<<<<<<< HEAD
-/beans/
-/dao/
-=======
-/dao/
-/beans/
->>>>>>> origin/glavna_irina
+/validations/
