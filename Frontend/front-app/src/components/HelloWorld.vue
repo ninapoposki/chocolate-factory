@@ -1,29 +1,28 @@
 <template>
   <div class="background">
     <div class="content">
-  <div class="loginform">
-    <h2>Login Form</h2>
-    <form @submit.prevent="login">
-      <div>
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required v-model="user.username" />
+      <div class="loginform">
+        <h2>Login Form</h2>
+        <form @submit.prevent="login">
+          <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required v-model="user.username" />
+          </div>
+          <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required v-model="user.password" />
+          </div>
+          <div class="error-message">
+            {{ errorMessage }}
+          </div>
+          <button type="submit" class="login-button">Log in</button>
+        </form>
+        <div class="register-link">
+          <a href="#" @click.prevent="registration">Don't have an account? Register here</a>
+        </div>
       </div>
-      <div>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required v-model="user.password" />
-      </div>
-      <div class="error-message">
-      {{ errorMessage }}
     </div>
-      <button type="submit" class="login-button">Log in</button>
-    </form>
-    <div class="register-link">
-      <a href="#" @click.prevent="registration">Don't have an account? Register here</a>
-    </div>
-    
   </div>
-</div>
-</div>
 </template>
 
 <script setup>
@@ -39,51 +38,6 @@ function registration() {
   router.push('/register');
 }
 
-/*
-function login() {
-  errorMessage.value = null;
-
-  axios.post('http://localhost:8080/WebShopAppREST/rest/users/login',{
-    username: user.value.username,  // koristi se user.value.username
-    password: user.value.password 
-        })
-  .then(response => {
-      console.log(response.data);
-      if (response.status === 200) {
-        errorMessage.value = "You successfully logged in.";
-        alert('You successfully logged in.');
-        console.log('Response:', response);
-
-        const user = response.data;
-        document.cookie = `id=${user.id}; path=/`;
-        document.cookie = `userRole=${user.role}; path=/`;
-
-        console.log('daja');
-        console.log(user.id);
-       // const userId = response.data.id; 
-        //console.log(userId);
-        //localStorage.setItem('userId', userId);
-        router.push('/profile');
-        
-      }
-    })
-    .catch(error => {
-      if (error.response && error.response.data.message) {
-        if (error.response.data.message === "Invalid password") {
-          errorMessage.value = "Invalid password.";
-        } else if (error.response.data.message === "User not found") {
-          errorMessage.value = "User with this username does not exist.";
-        } else if (error.response.status === 403) {
-          errorMessage.value = "Blokirani ste od strane administratora!";
-        } else {
-          errorMessage.value = "Došlo je do greške. Pokušajte ponovo.";
-        }
-      } else {
-        errorMessage.value = "Došlo je do greške. Pokušajte ponovo.";
-      }
-      console.error(error);
-    });
-}*/
 function login() {
   errorMessage.value = null;
 
@@ -117,7 +71,7 @@ function login() {
       } else if (error.response.data.message === "User not found") {
         errorMessage.value = "User with this username does not exist.";
       } else if (error.response.status === 403) {
-        errorMessage.value = "Your account is blocked by the administrator!";
+        errorMessage.value = "Your account is blocked and you cannot log in.";
       } else {
         errorMessage.value = "An error occurred. Please try again.";
       }
@@ -173,5 +127,4 @@ function login() {
   width: 80px; 
   margin: 10px auto; 
 }
-
 </style>

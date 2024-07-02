@@ -1,6 +1,7 @@
 package dao;
 
 import beans.User;
+import enumerations.ActivityStatus;
 import enumerations.Gender;
 import enumerations.Role;
 
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -61,6 +63,7 @@ public class UserDAO {
             u.setDateOfBirth(user.getDateOfBirth());
             u.setRole(user.getRole());
             u.setPoints(user.getPoints());
+            u.setActivity(user.getActivity());
             saveToFile();
         }
         return u;
@@ -111,7 +114,8 @@ public class UserDAO {
                user.getGender().toString() + "," +
                user.getDateOfBirth().format(formatter) + "," +
                user.getRole().toString() + "," + 
-               user.getPoints();
+               user.getPoints()+ ","+
+               user.getActivity().toString();
     }
 
     public void loadUsers(String contextPath) {
@@ -136,8 +140,9 @@ public class UserDAO {
                 LocalDate dateOfBirth = LocalDate.parse(data[6].trim(), formatter);
                 Role role = Role.valueOf(data[7].trim().toUpperCase());
                 double points = Double.parseDouble(data[8].trim());
+                ActivityStatus activity=ActivityStatus.valueOf(data[9].trim().toUpperCase());
                 
-                User user = new User(id, username, password, firstName, lastName, gender, dateOfBirth, role, points);
+                User user = new User(id, username, password, firstName, lastName, gender, dateOfBirth, role, points,activity);
                 users.put(id, user);
             }
         } catch (IOException e) {
@@ -196,6 +201,128 @@ public class UserDAO {
                 .filter(user -> user.getRole() == Role.MANAGER && !assignedManagerIds.contains(user.getId()))
                 .collect(Collectors.toList());
     }
+
+    public Collection<User> getAllWithoutAdministrators(){
+    	return users.values().stream().filter(user->user.getRole()!=Role.ADMINISTRATOR).collect(Collectors.toList());
+    }
+
+//    public Collection<User> searchUsers(String searchTerm) {
+//        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+//            return getAllWithoutAdministrators();
+//        }
+//        String lowerCaseSearchTerm = searchTerm.toLowerCase();
+//        return users.values().stream()
+//            .filter(user -> user.getRole() != Role.ADMINISTRATOR &&
+//                            (user.getFirstName().toLowerCase().contains(lowerCaseSearchTerm) ||
+//                             user.getLastName().toLowerCase().contains(lowerCaseSearchTerm) ||
+//                             user.getUsername().toLowerCase().contains(lowerCaseSearchTerm)))
+//            .collect(Collectors.toList());
+//    }
+//    public Collection<User> sortUsers(String sortBy, boolean ascending) {
+//        Comparator<User> comparator;
+//
+//        switch (sortBy.toLowerCase()) {
+//            case "firstname":
+//                comparator = Comparator.comparing(User::getFirstName);
+//                break;
+//            case "lastname":
+//                comparator = Comparator.comparing(User::getLastName);
+//                break;
+//            case "username":
+//                comparator = Comparator.comparing(User::getUsername);
+//                break;
+//            case "points":
+//                comparator = Comparator.comparingDouble(User::getPoints);
+//                break;
+//            default:
+//                throw new IllegalArgumentException("Invalid sort parameter");
+//        }
+//
+//        if (!ascending) {
+//            comparator = comparator.reversed();
+//        }
+//
+//        return users.values().stream()
+//                .filter(user -> user.getRole() != Role.ADMINISTRATOR)
+//                .sorted(comparator)
+//                .collect(Collectors.toList());
+//    }
+//    
+//    public Collection<User> filterUsers(String role, String type) {
+//        return users.values().stream()
+//                .filter(user -> {
+//                    if (role != null && !role.isEmpty()) {
+//                        return user.getRole().toString().equalsIgnoreCase(role);
+//                    }
+//                    if (type != null && !type.isEmpty()) {
+//                        switch (type.toLowerCase()) {
+//                            case "gold":
+//                                return user.getPoints() > 5000;
+//                            case "silver":
+//                                return user.getPoints() < 5000 && user.getPoints() >= 3000;
+//                            case "bronze":
+//                                return user.getPoints() < 3000;
+//                        }
+//                    }
+//                    return true; // Return all if no filter is provided
+//                })
+//                .filter(user -> user.getRole() != Role.ADMINISTRATOR)
+//                .collect(Collectors.toList());
+//    }
+    public Collection<User> searchSortFilterUsers(String searchTerm, String sortBy, boolean ascending, String role, String type) {
+        Comparator<User> comparator = Comparator.comparing(User::getId); // Default comparator
+
+        if (sortBy != null && !sortBy.isEmpty()) {
+            switch (sortBy.toLowerCase()) {
+                case "firstname":
+                    comparator = Comparator.comparing(User::getFirstName);
+                    break;
+                case "lastname":
+                    comparator = Comparator.comparing(User::getLastName);
+                    break;
+                case "username":
+                    comparator = Comparator.comparing(User::getUsername);
+                    break;
+                case "points":
+                    comparator = Comparator.comparingDouble(User::getPoints);
+                    break;
+            }
+            if (!ascending) {
+                comparator = comparator.reversed();
+            }
+        }
+
+        String lowerCaseSearchTerm = (searchTerm != null) ? searchTerm.toLowerCase() : "";
+
+        return users.values().stream()
+                .filter(user -> user.getRole() != Role.ADMINISTRATOR)
+                .filter(user -> {
+                    boolean matchesSearch = lowerCaseSearchTerm.isEmpty() || 
+                                            user.getFirstName().toLowerCase().contains(lowerCaseSearchTerm) ||
+                                            user.getLastName().toLowerCase().contains(lowerCaseSearchTerm) ||
+                                            user.getUsername().toLowerCase().contains(lowerCaseSearchTerm);
+                    boolean matchesRole = (role == null || role.isEmpty()) || user.getRole().toString().equalsIgnoreCase(role);
+                    boolean matchesType = true;
+                    if (type != null && !type.isEmpty()) {
+                        switch (type.toLowerCase()) {
+                            case "gold":
+                                matchesType = user.getPoints() > 5000;
+                                break;
+                            case "silver":
+                                matchesType = user.getPoints() < 5000 && user.getPoints() >= 3000;
+                                break;
+                            case "bronze":
+                                matchesType = user.getPoints() < 3000;
+                                break;
+                        }
+                    }
+                    return matchesSearch && matchesRole && matchesType;
+                })
+                .sorted(comparator)
+                .collect(Collectors.toList());
+    }
+
+
 
 
 }
