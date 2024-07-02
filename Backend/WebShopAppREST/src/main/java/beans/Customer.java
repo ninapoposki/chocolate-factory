@@ -5,6 +5,7 @@ import java.util.List;
 
 import enumerations.Gender;
 import enumerations.Role;
+import enumerations.ActivityStatus;
 import enumerations.CustomerType;
 import beans.ShoppingCart;
 
@@ -16,19 +17,21 @@ public class Customer extends User {
     private CustomerType customerType;
     private int discount; 
     private int requiredPoints;
+    private ActivityStatus activity;
 
     public Customer() {
         super();
     }
 
-    public Customer(User user, List<Purchase> purchases, ShoppingCart cart, int loyaltyPoints, CustomerType customerType, int discount, int requiredPoints) {
-        super(user.getId(), user.getUsername(), user.getPassword(), user.getFirstName(), user.getLastName(), user.getGender(), user.getDateOfBirth(), user.getRole(), user.getPoints());
+    public Customer(User user, List<Purchase> purchases, ShoppingCart cart, int loyaltyPoints, CustomerType customerType, int discount, int requiredPoints,ActivityStatus activity) {
+        super(user.getId(), user.getUsername(), user.getPassword(), user.getFirstName(), user.getLastName(), user.getGender(), user.getDateOfBirth(), user.getRole(), user.getPoints(),user.getActivity());
         this.purchases = purchases;
         this.cart = cart;
         this.loyaltyPoints = loyaltyPoints;
         this.customerType = customerType;
         this.discount = discount;
         this.requiredPoints = requiredPoints;
+        this.activity=activity;
         
     }
 
@@ -79,5 +82,14 @@ public class Customer extends User {
 	public void setRequiredPoints(int requiredPoints) {
 		this.requiredPoints = requiredPoints;
 	}
+
+	public ActivityStatus getActivity() {
+		return activity;
+	}
+
+	public void setActivity(ActivityStatus activity) {
+		this.activity = activity;
+	}
+
     
 }

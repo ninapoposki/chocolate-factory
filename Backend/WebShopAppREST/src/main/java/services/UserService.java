@@ -16,6 +16,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -29,6 +30,7 @@ import dao.UserDAO;
 import dto.RegisteredUserDTO;
 import javax.ws.rs.core.NewCookie;
 
+import enumerations.ActivityStatus;
 import enumerations.Role;
 
 
@@ -132,43 +134,48 @@ public class UserService {
 	}
 */
 	
-	@POST
-	@Path("/login")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response loginUser(User loginUser, @Context HttpServletRequest request, @Context HttpServletResponse response) {
-	    UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+	 @POST
+	 @Path("/login")
+	 @Consumes(MediaType.APPLICATION_JSON)
+	 @Produces(MediaType.APPLICATION_JSON)
+	 public Response loginUser(User loginUser, @Context HttpServletRequest request, @Context HttpServletResponse response) {
+	     UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
 
-	    String username = loginUser.getUsername();
-	    String password = loginUser.getPassword();
+	     String username = loginUser.getUsername();
+	     String password = loginUser.getPassword();
 
-	    if (dao.existsByUsername(username)) {
-	        boolean validUser = dao.validateUser(username, password);
-	        if (validUser) {
-	        	User user = dao.findByUsername(username);
-	        	
-	        	request.getSession().setAttribute("loginUser", user);
-	        	Cookie userCookie = new Cookie("username", user.getUsername() );
-	        	userCookie.setPath("/");
-	        	response.addCookie(userCookie);
-	        	
-	        	Cookie roleCookie = new Cookie("userRole", user.getRole().toString());
-	        	roleCookie.setPath("/");
-	        	response.addCookie(roleCookie);
-	        	
-	        	Cookie idCookie = new Cookie("id", user.getId() );
-	        	idCookie.setPath("/");
-	        	response.addCookie(idCookie);
-	        	
-	            return Response.ok().entity(user).build();
-	           // return Response.ok().entity("{\"message\": \"Login successful\"}").build();
-	        } else {
-	            return Response.status(Response.Status.UNAUTHORIZED).entity("{\"message\": \"Invalid password\"}").build();
-	        }
-	    } else {
-	        return Response.status(Response.Status.NOT_FOUND).entity("{\"message\": \"User not found\"}").build();
-	    }
-	}
+	     if (dao.existsByUsername(username)) {
+	         boolean validUser = dao.validateUser(username, password);
+	         if (validUser) {
+	             User user = dao.findByUsername(username);
+	             
+	             // Provera da li je korisnik deaktiviran
+	             if (user.getActivity() == ActivityStatus.DEACTIVATED) {
+	                 return Response.status(Response.Status.FORBIDDEN).entity("{\"message\": \"Your account is blocked and you cannot log in.\"}").build();
+	             }
+
+	             request.getSession().setAttribute("loginUser", user);
+	             Cookie userCookie = new Cookie("username", user.getUsername());
+	             userCookie.setPath("/");
+	             response.addCookie(userCookie);
+	             
+	             Cookie roleCookie = new Cookie("userRole", user.getRole().toString());
+	             roleCookie.setPath("/");
+	             response.addCookie(roleCookie);
+	             
+	             Cookie idCookie = new Cookie("id", user.getId());
+	             idCookie.setPath("/");
+	             response.addCookie(idCookie);
+	             
+	             return Response.ok().entity(user).build();
+	         } else {
+	             return Response.status(Response.Status.UNAUTHORIZED).entity("{\"message\": \"Invalid password\"}").build();
+	         }
+	     } else {
+	         return Response.status(Response.Status.NOT_FOUND).entity("{\"message\": \"User not found\"}").build();
+	     }
+	 }
+
 
 	
 	@POST
@@ -275,4 +282,71 @@ public class UserService {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Adding new manager failed").build();
         }
     }
+	
+	@GET
+	@Path("/withoutAdm")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllWithoutAdministrators() {
+	    UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+	    Collection<User> users = dao.getAllWithoutAdministrators();
+	    if (users == null || users.isEmpty()) {
+	        return Response.status(Response.Status.NOT_FOUND).build();
+	    } else {
+	        return Response.status(Response.Status.OK).entity(users).build();
+	    }
+	}
+//	@GET
+//	@Path("/search")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response searchUsers(@QueryParam("searchTerm") String searchTerm) {
+//	    UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+//	    Collection<User> users = dao.searchUsers(searchTerm);
+//	    return Response.ok(users).build();
+//	}
+//	@GET
+//	@Path("/sort")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response sortUsers(@QueryParam("sortBy") String sortBy, @QueryParam("ascending") boolean ascending) {
+//	    UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+//	    Collection<User> users = dao.sortUsers(sortBy, ascending);
+//	    return Response.ok(users).build();
+//	}
+//
+//	//filter za tip korisnika??
+//	@GET
+//	@Path("/filter")
+//	@Produces(MediaType.APPLICATION_JSON)
+//	public Response filterUsers(@QueryParam("role") String role, @QueryParam("type") String type) {
+//	    UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+//	    Collection<User> users = dao.filterUsers(role, type);
+//	    return Response.ok(users).build();
+//	}
+
+	@GET
+	@Path("/searchSortFilter")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response searchSortFilterUsers(
+	        @QueryParam("searchTerm") String searchTerm,
+	        @QueryParam("sortBy") String sortBy,
+	        @QueryParam("ascending") boolean ascending,
+	        @QueryParam("role") String role,
+	        @QueryParam("type") String type) {
+	    UserDAO dao = (UserDAO) ctx.getAttribute("userDAO");
+	    Collection<User> users = dao.searchSortFilterUsers(searchTerm, sortBy, ascending, role, type);
+	    return Response.ok(users).build();
+	}
+	
+	@PUT
+	@Path("/deacUser/{userId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public void deactivateUser(@PathParam("userId") String userId) {
+		UserDAO dao=(UserDAO) ctx.getAttribute("userDAO");
+		User user=dao.findUser(userId);
+		user.setActivity(ActivityStatus.DEACTIVATED);
+		dao.updateUser(userId, user);
+	}
+	
+
+
+
 }

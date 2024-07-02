@@ -5,6 +5,7 @@ import java.util.Date;
 
 
 import enumerations.Role;
+import enumerations.ActivityStatus;
 import enumerations.Gender;
 
 public class User {
@@ -17,6 +18,7 @@ public class User {
 	private LocalDate dateOfBirth;
 	private Role role;
 	private double points;
+	private ActivityStatus activity;
 	
 	public User() {
 		super();
@@ -24,7 +26,7 @@ public class User {
 
 
 	public User(String id,String username, String password, String firstName, String lastName, Gender gender, LocalDate dateOfBirth,
-			Role role, double points) {
+			Role role, double points,ActivityStatus activity) {
 		super();
 		this.id = id;
 		this.username = username;
@@ -35,7 +37,8 @@ public class User {
 		this.dateOfBirth = dateOfBirth;
 		this.role = role;
 		this.points = points;
-	}
+		this.activity=activity;
+		}
 
 
 	public String getId() {
@@ -127,6 +130,17 @@ public class User {
 	public void setRole(Role role) {
 		this.role = role;
 	}
+
+
+	public ActivityStatus getActivity() {
+		return activity;
+	}
+
+
+	public void setActivity(ActivityStatus activity) {
+		this.activity = activity;
+	}
+	
 
 	
 
