@@ -10,6 +10,7 @@ import ShoppingCart from '@/views/ShoppingCart.vue';
 import Logout from '@/views/Logout.vue';
 import AddEmployee from '@/components/AddEmployee.vue';
 import UpdateQuantity from '@/components/UpdateQuantity.vue';
+import GradeFactory from '@/components/GradeFactory.vue';
 
 
 const routes = [
@@ -50,12 +51,17 @@ const routes = [
     component: UpdateQuantity,
   },
   {
+    path: "/grade/:id",
+    name: "GradeFactory",
+    component: GradeFactory,
+  },
+  {
     path: "/addEmployee/:factoryId",
     name: "addEmployee",
     component: AddEmployee,
     props: true // da se proslede kao props parametri?
   },
-
+  
   {
     path: "/register",
     name: "register",

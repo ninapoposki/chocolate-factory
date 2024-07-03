@@ -2,12 +2,15 @@ package services;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.PATCH;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -16,10 +19,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import beans.Comment;
 import beans.Factory;
 import beans.Location;
 import beans.User;
 import dao.ChocolateDAO;
+import dao.CommentDAO;
 import dao.FactoryDAO;
 import dao.LocationDAO;
 import dao.UserDAO;
@@ -219,5 +224,43 @@ public class FactoryService {
             return Response.status(Response.Status.NOT_FOUND).entity("Factory not found for the given employee").build();
         }
         return Response.ok(factory).build();
+    }
+    
+    
+    @PUT
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateFactory(@PathParam("id") String id, Factory factory) {
+    	 FactoryDAO factoryDao = (FactoryDAO) ctx.getAttribute("factoryDAO");;
+        Factory updatedFactory = factoryDao.updateFactory(id, factory);
+
+        if (updatedFactory != null) {
+            return Response.ok(updatedFactory).build();
+        } else {
+            return Response.status(Response.Status.NOT_FOUND).entity("Factory not found").build();
+        }
+    }
+    
+    @PATCH
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response patchFactory(@PathParam("id") String id, Map<String, Double> patchData) {
+        FactoryDAO factoryDao = (FactoryDAO) ctx.getAttribute("factoryDAO");
+        Factory factory = factoryDao.findFactory(id);
+
+        if (factory == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity("Factory not found").build();
+        }
+
+        if (patchData.containsKey("grade")) {
+            double newGrade = patchData.get("grade");
+            factory.setGrade(newGrade);
+            Factory updatedFactory = factoryDao.updateFactory(id, factory);
+            return Response.ok(updatedFactory).build();
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Invalid patch data").build();
+        }
     }
 }

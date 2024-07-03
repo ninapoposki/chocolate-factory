@@ -7,9 +7,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import beans.Comment;
 import enumerations.Role;
@@ -46,6 +49,8 @@ public class CommentDAO {
             c.setText(comment.getText());
             c.setUserId(comment.getUserId());
             c.setRole(comment.getRole());
+            c.setIsRejected(comment.getIsRejected());
+            c.setIsChecked(comment.getIsChecked());
             saveComments();
         }
         return c;
@@ -68,7 +73,7 @@ public class CommentDAO {
                     out.write(commentToCsv(comment) + "\n");
                 }
                 out.flush();
-                System.out.println("All comments saved to file successfully.");
+                
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -81,7 +86,9 @@ public class CommentDAO {
                comment.getGrade() + "," +
                comment.getFactoryId() + "," +
                comment.getUserId() + "," +
-               comment.getRole().toString();
+               comment.getRole().toString() + "," +
+               comment.getIsRejected() + ","+
+               comment.getIsChecked();
     }
 
     private void saveToFile(Comment comment) {
@@ -89,7 +96,7 @@ public class CommentDAO {
         try (BufferedWriter out = new BufferedWriter(new FileWriter(filePath.toString(), true))) {
             out.write(commentToCsv(comment) + "\n"); // Dodato \n za novi red
             out.flush();
-            System.out.println("Comment saved to file successfully.");
+           
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -114,8 +121,9 @@ public class CommentDAO {
                 int factoryId = Integer.parseInt(data[3].trim());
                 int userId = Integer.parseInt(data[4].trim());
                 Role role = Role.valueOf(data[5].trim().toUpperCase());
-
-                Comment comment = new Comment(id, text, grade, factoryId, userId, role);
+                boolean IsRejected = Boolean.parseBoolean(data[6].trim());
+                boolean isChecked = Boolean.parseBoolean(data[7].trim());
+                Comment comment = new Comment(id, text, grade, factoryId, userId, role, IsRejected, isChecked);
                 comments.put(id, comment);
 
                 // Ažuriranje maksimalnog ID-a
@@ -135,5 +143,39 @@ public class CommentDAO {
                 }
             }
         }
+    }
+    
+    private String[] parseCsvLine(String line) {
+        List<String> tokens = new ArrayList<>();
+        StringBuilder currentToken = new StringBuilder();
+        boolean inQuotes = false;
+        for (char c : line.toCharArray()) {
+            if (c == '\"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                tokens.add(currentToken.toString());
+                currentToken.setLength(0);
+            } else {
+                currentToken.append(c);
+            }
+        }
+        tokens.add(currentToken.toString());
+        return tokens.toArray(new String[0]);
+    }
+    
+    public Collection<Comment> findCommentsByFactoryAndRejection(int factoryId, boolean isRejected) {
+        return comments.values().stream()
+                .filter(comment -> comment.getFactoryId() == factoryId && comment.getIsRejected() == isRejected)
+                .collect(Collectors.toList());
+    }
+    public Collection<Comment> findCommentsByFactory(int factoryId) {
+        return comments.values().stream()
+                .filter(comment -> comment.getFactoryId() == factoryId)
+                .collect(Collectors.toList());
+    }
+    public Collection<Comment> findCommentsCount(int factoryId) {
+        return comments.values().stream()
+                .filter(comment -> comment.getFactoryId() == factoryId && comment.getIsRejected() &&  comment.getIsChecked())
+                .collect(Collectors.toList());
     }
 }
