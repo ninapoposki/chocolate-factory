@@ -111,19 +111,19 @@ export default {
   },
   methods: {
     fetchFactories() {
-      axios.get('http://localhost:8080/WebShopAppREST/rest/factories')
-        .then(response => {
-          this.factories = response.data.sort((a, b) => {
-            if (a.isStatus === b.isStatus) {
-              return a.id - b.id;
-            }
-            return a.isStatus ? -1 : 1;
-          });
-        })
-        .catch(error => {
-          console.error('Error fetching factories', error);
+    axios.get('http://localhost:8080/WebShopAppREST/rest/factories')
+      .then(response => {
+        this.factories = response.data.sort((a, b) => {
+          if (a.isStatus === b.isStatus) {
+            return a.id - b.id;
+          }
+          return a.isStatus ? -1 : 1;
         });
-    },
+      })
+      .catch(error => {
+        console.error('Error fetching factories', error);
+      });
+  },
     fetchChocolateTypes() {
       axios.get('http://localhost:8080/WebShopAppREST/rest/chocolates/types')
         .then(response => {
@@ -161,57 +161,52 @@ export default {
   return null;
     },
     searchFactories() {
-      axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/search?search=${this.searchQuery}`)
-        .then(response => {
-          if (response.data.length > 0) {
-            this.factories = response.data;
-          } else {
-            this.factories = [];
-          }
-        })
-        .catch(error => {
-          console.error('Error searching factories', error);
-        });
-    },
-    sortFactories() {
-      axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/sort?sortBy=${this.sortBy}&ascending=${this.ascending}`)
-        .then(response => {
+    axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/search?search=${this.searchQuery}`)
+      .then(response => {
+        if (response.data.length > 0) {
           this.factories = response.data;
-        })
-        .catch(error => {
-          console.error('Error sorting factories', error);
-        });
-    },
-    filterFactories() {
-      console.log("Filtering with params:", {
-    chocolateType: this.chocolateType,
-    chocolateKind: this.chocolateKind,
-    openOnly: this.openOnly
-  });
-
-      axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/filter`, {
-        params: {
-          chocolateType: this.chocolateType,
-          chocolateVariety: this.chocolateKind, 
-          openOnly: this.openOnly
+        } else {
+          this.factories = [];
         }
       })
+      .catch(error => {
+        console.error('Error searching factories', error);
+      });
+  },
+  sortFactories() {
+    axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/sort?sortBy=${this.sortBy}&ascending=${this.ascending}`)
       .then(response => {
         this.factories = response.data;
       })
       .catch(error => {
-        console.error('Error filtering factories', error);
+        console.error('Error sorting factories', error);
       });
-    },
-    resetFactories() {
-      this.fetchFactories();
-      this.sortBy = '';
-      this.ascending = null;
-      this.searchQuery = '';
-      this.chocolateType = '';
-      this.chocolateKind = '';
-      this.openOnly = '';
-    },
+  },
+  filterFactories() {
+    axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/filter`, {
+      params: {
+        chocolateType: this.chocolateType,
+        chocolateVariety: this.chocolateKind,
+        openOnly: this.openOnly
+      },
+      withCredentials: true
+    })
+    .then(response => {
+      this.factories = response.data;
+    })
+    .catch(error => {
+      console.error('Error filtering factories', error);
+    });
+  },
+  resetFactories() {
+    this.fetchFactories();
+    this.sortBy = '';
+    this.ascending = null;
+    this.searchQuery = '';
+    this.chocolateType = '';
+    this.chocolateKind = '';
+    this.openOnly = '';
+  },
     ShowDetails(id) {
       this.$router.push(`/details/${id}`);
     },
