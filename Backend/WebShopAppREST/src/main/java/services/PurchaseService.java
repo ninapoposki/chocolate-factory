@@ -24,6 +24,7 @@ import beans.Chocolate;
 import beans.Factory;
 import beans.Purchase;
 import beans.ShoppingCart;
+import beans.User;
 import dao.PurchaseDAO;
 import dao.ShoppingCartDAO;
 import dao.UserDAO;
@@ -58,20 +59,20 @@ public class PurchaseService {
 //	    }
 //	}
 	@PostConstruct
-
 	public void init() {
 	    if (ctx.getAttribute("purchaseDAO") == null) {
 	        String contextPath = ctx.getRealPath("");
 	        LocationDAO locationDAO = new LocationDAO(contextPath); 
-	        UserDAO userDAO=new UserDAO();
+	        UserDAO userDAO = new UserDAO(contextPath); // Inicijalizacija UserDAO
 	        ChocolateDAO chocolateDAO = new ChocolateDAO(contextPath);
-	        FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO, chocolateDAO,userDAO);
+	        FactoryDAO factoryDAO = new FactoryDAO(contextPath, locationDAO, chocolateDAO, userDAO);
 	        CommentDAO commentDAO = new CommentDAO(contextPath);
 	        factoryDAO.loadFactories(contextPath); 
 	        ctx.setAttribute("factoryDAO", factoryDAO);
 	        ShoppingCartDAO shoppingCartDAO = new ShoppingCartDAO(contextPath, chocolateDAO);
 	        PurchaseDAO purchaseDAO = new PurchaseDAO(contextPath, factoryDAO, chocolateDAO, shoppingCartDAO, commentDAO);
-	        ctx.setAttribute("purchaseDAO", purchaseDAO); 
+	        ctx.setAttribute("purchaseDAO", purchaseDAO);
+	        ctx.setAttribute("userDAO", userDAO); // Dodavanje UserDAO u kontekst
 	    }
 	}
 	/*
@@ -260,7 +261,15 @@ public class PurchaseService {
 //	        Collection<Purchase> purchases = dao.findAll();
 //	        return dao.sortPurchases(purchases, sortBy, ascending);
 //	    }
-
+	 @GET
+	    @Path("/suspicious")
+	    @Produces(MediaType.APPLICATION_JSON)
+	    public Response getSuspiciousUsers() {
+	        UserDAO userDAO = (UserDAO) ctx.getAttribute("userDAO");
+	        PurchaseDAO purchaseDAO = (PurchaseDAO) ctx.getAttribute("purchaseDAO");
+	        Collection<User> suspiciousUsers = purchaseDAO.getSuspiciousUsers(userDAO);
+	        return Response.ok(suspiciousUsers).build();
+	    }
 
 
 

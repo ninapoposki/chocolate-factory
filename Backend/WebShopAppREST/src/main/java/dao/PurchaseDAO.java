@@ -10,9 +10,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,11 +23,13 @@ import beans.Comment;
 import beans.Factory;
 import beans.Purchase;
 import beans.ShoppingCart;
+import beans.User;
 import enumerations.PurchaseStatus;
 import enumerations.Role;
 
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 public class PurchaseDAO {
 	
 	private HashMap<String, Purchase> purchases = new HashMap<String, Purchase>();
@@ -400,6 +405,20 @@ public class PurchaseDAO {
 
 	    return purchaseStream.collect(Collectors.toList());
 	}
+	
+
+public Collection<User> getSuspiciousUsers(UserDAO userDAO) {
+    OffsetDateTime oneMonthAgo = OffsetDateTime.now().minus(1, ChronoUnit.MONTHS);
+
+    Map<Integer, Long> cancellations = purchases.values().stream()
+            .filter(purchase -> purchase.getStatus() == PurchaseStatus.CANCELLED && purchase.getDateAndTime().isAfter(oneMonthAgo))
+            .collect(Collectors.groupingBy(Purchase::getCustomerId, Collectors.counting()));
+
+    return cancellations.entrySet().stream()
+            .filter(entry -> entry.getValue() > 5)
+            .map(entry -> userDAO.findUser(entry.getKey().toString()))
+            .collect(Collectors.toList());
+}
 
 
 
