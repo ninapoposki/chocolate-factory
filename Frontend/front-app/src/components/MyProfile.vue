@@ -3,7 +3,6 @@
     <div class="content">
       <div class="user-info">
         <img class="user-image" :src="userImage" alt="User Image">
-        <p>{{ user.id }}</p>
         <div style="padding-top: 10px;">
           <strong>User:</strong>
           <template v-if="editable">
@@ -36,12 +35,15 @@
           </template>
           <template v-else>{{ maskedPassword }}</template>
         </div>
-        <div style="padding-top: 10px; padding-bottom: 10px;"><strong>Your points:</strong> {{ user.points }}
-        </div>
-        <div style="padding-top: 10px; padding-bottom: 10px;">
+
+        <div v-if="user.role === 'CUSTOMER'" style="padding-top: 10px; padding-bottom: 10px;">
+    <strong>Your points:</strong> {{ user.points }}
+</div>
+
+        <div v-if="user.role === 'CUSTOMER'" style="padding-top: 10px; padding-bottom: 10px;">
          <strong>Your medal:</strong> {{ userPointsStatus }}
          </div>
-         <div style="padding-top: 10px; padding-bottom: 10px;">
+         <div v-if="user.role === 'CUSTOMER'" style="padding-top: 10px; padding-bottom: 10px;">
          <i>  {{ message }}</i>
          </div>
         <button @click="toggleEdit">{{ editable ? 'Save' : 'Edit' }}</button>
@@ -98,17 +100,56 @@
                 </div>
               </td>
               <td v-else>N/A</td>
-              <td>{{ purchase.quantity }}</td>
+              <td> <div v-for="(quantity, index) in purchase.quantities" :key="index">
+    {{ quantity }}<br>
+  </div></td>
               <td>{{ formatDate(purchase.dateAndTime) }}</td>
               <td>{{ purchase.price.toFixed(2) }}din</td>
               <td>{{ purchase.status }}</td>
-              <td>
-                <button v-if="purchase.status === 'PROCESSING'" @click="cancelOrder(purchase.id)">Cancel Order</button>
-              </td>
+              <td><button v-if="purchase.status === 'PROCESSING'" @click="cancelOrder(purchase.id)">Cancel Order</button>
+           
+           <button v-if="purchase.status === 'ACCEPTED'" @click="GradeFactory(purchase.id)">Grade Factory</button>
+           </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+<!--       
+      <table>
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Chocolates</th>
+            <th>Quantity</th>
+            <th>Date and Time</th>
+            <th>Price</th>
+            <th>Status</th>
+           
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="purchase in purchases" :key="purchase.code">
+            <td>{{ purchase.code }}</td>
+            <td>
+            <div v-for="(name, index) in purchase.chocolateNames" :key="index">
+              {{ name }}<br>
+            </div>
+          </td>
+            <td> <div v-for="(quantity, index) in purchase.quantities" :key="index">
+    {{ quantity }}<br>
+  </div></td>
+            <td>{{ formatDate(purchase.dateAndTime) }}</td>
+            <td>{{ purchase.price.toFixed(2) }}din</td>
+            <td>{{ purchase.status }}</td>
+            <td><button v-if="purchase.status === 'PROCESSING'" @click="cancelOrder(purchase.id)">Cancel Order</button>
+           
+            <button v-if="purchase.status === 'ACCEPTED'" @click="GradeFactory(purchase.id)">Grade Factory</button>
+            </td>
+          </tr>
+        </tbody>
+      </table> -->
+
     </div>
 
     <div v-if="user.role === 'MANAGER' && managerFactory" class="factory-info">
@@ -474,8 +515,35 @@ const formatDate = (date) => {
   });
 };
 
+
+function GradeFactory(id) {
+  router.push(`/grade/${id}`);
+}
+
+
+const getChocolateQuantitiesFromCartIds = async (cartIds) => {
+  const quantities = [];
+
+  for (const id of cartIds) {
+    try {
+      const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/shoppingCarts/${id}`);
+      const chocolates = response.data.chocolates;
+      const quantity = Object.values(chocolates)[0]; // Preuzimanje vrednosti iz mape chocolates
+      quantities.push(quantity);
+    } catch (error) {
+      console.error(`Error fetching quantity for shopping cart ID ${id}:`, error);
+    }
+  }
+
+  return quantities;
+};
+
+
+
+
 const getChocolateNamesFromCartIds = async (cartIds) => {
   const names = [];
+
 
   for (const cartId of cartIds) {
     try {
@@ -713,7 +781,7 @@ const fetchShoppingCartById = async (cartIds) => {
     return null;
   }
 };
-
+/* DAJNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 const fetchPurchasesByUserId = () => {
   const userId = getUserIdFromLocalStorage();
   if (userId && userId !== '-1') {
@@ -723,6 +791,35 @@ const fetchPurchasesByUserId = () => {
         Promise.all(purchaseData.map(purchase => {
           return getChocolateNamesFromCartIds(purchase.chocolates).then(names => {
             purchase.chocolateNames = names;
+            return purchase;
+          });
+
+
+
+
+        })).then(updatedPurchases => {
+          purchases.value = updatedPurchases;
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching purchases:', error);
+      });
+  }
+};
+*/
+const fetchPurchasesByUserId = () => {
+  const userId = getUserIdFromLocalStorage();
+  if (userId && userId !== '-1') {
+    axios.get(`http://localhost:8080/WebShopAppREST/rest/purchases/user/${userId}`)
+      .then(response => {
+        const purchaseData = response.data;
+        Promise.all(purchaseData.map(purchase => {
+          return Promise.all([
+            getChocolateNamesFromCartIds(purchase.chocolates),
+            getChocolateQuantitiesFromCartIds(purchase.chocolates)
+          ]).then(([names, quantities]) => {
+            purchase.chocolateNames = names;
+            purchase.quantities = quantities;
             return purchase;
           });
         })).then(updatedPurchases => {

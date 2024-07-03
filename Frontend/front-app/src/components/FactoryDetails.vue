@@ -3,7 +3,7 @@
       <h1 class="title">Factory Details</h1>
       <div v-if="factory">
           <div class="tables">
-              <table class="table-container">
+              <table class="table1-container">
                   <thead>
                       <tr>
                           <th>Logo</th>
@@ -12,7 +12,6 @@
                           <th>Working Time</th>
                           <th v-if="factory.grade !== 0.0">Grade</th>
                           <th>Status</th>
-                          <th>Comments</th>
                       </tr>
                   </thead>
                   <tbody>
@@ -23,9 +22,40 @@
                           <td>{{ factory.workingTime }}</td>
                           <td v-if="factory.grade !== 0.0">{{ factory.grade }}</td>
                           <td>{{ factory.isStatus ? 'active' : 'inactive' }}</td>
-                          <td>None</td>
+                       
                       </tr>
                   </tbody>
+              </table >
+                 
+              <table class="table2-container">
+                  <thead>
+                    
+                              <tr>
+                                  <th>Comment</th>
+                                  <th>Grade</th>
+                                  <th v-if="userRole === 'MANAGER'">STATUS</th>
+                              </tr>
+
+                            </thead>
+                            <tbody>
+                              <tr v-for="comment in comments" :key="comment.id">
+
+                                <td>{{comment.text}}</td>
+                                <td>{{ comment.grade }}</td>
+                                
+                            
+                                  <th v-if="userRole === 'MANAGER'">
+                                    <p v-if="comment.isChecked">
+                                      {{ comment.isRejected ? 'Accepted' : 'Denied' }}
+                                    </p>
+                                    <div v-else>
+                                      <button @click="acceptComment(comment.id)">Accept</button>
+                                      <button @click="denyComment(comment.id)">Deny</button>
+                                    </div>
+                                  </th>
+                              </tr>
+
+                            </tbody>
               </table>
           </div>
       </div>
@@ -108,11 +138,15 @@ const route = useRoute();
 const factory = ref(null);
 const chocolates = ref([]);
 const userRole = ref('');
-
+const comments = ref([]);
+const texts = ref([]);
+const userIds = ref([]);
+const updatedComment = ref('');
 const showQuantityModal = ref(false);
 const selectedChocolate = ref(null);
 const selectedChocolateId = ref(null); 
 let quantityExceedsStockError = ref(false);
+const number = ref(0);
 
 let quantity = ref(1); // Initial quantity value
 
@@ -133,11 +167,146 @@ const getUserIdFromLocalStorage = () => {
   return null;
 };
 
-onMounted(() => {
+
+function acceptComment(id) {
+    // Logika za prihvatanje komentara
+    console.log(id);
+   // comment.isAccepted = true;
+   axios.get(`http://localhost:8080/WebShopAppREST/rest/comments/${id}`)
+        .then(response => {
+            const comment = response.data;
+            
+            
+            
+            console.log('Accepted comment:', comment);
+            comment.isChecked = true;
+            comment.isRejected = true;
+
+                      axios.put(`http://localhost:8080/WebShopAppREST/rest/comments/${id}`, comment)
+                  .then(response => {
+                    
+                      console.log('Updated comment:', comment);
+
+                      const localComment = comments.value.find(c => c.id === id);
+                    if (localComment) {
+                        localComment.isChecked = true;
+                        localComment.isRejected = true;
+                    }
+
+                    console.log('factory grade', factory.value.grade);
+                    const factoryGrade = factory.value.grade;
+          const commentGrade = comment.grade;
+                    console.log('comment grade', commentGrade.value);
+          const newGrade = (factoryGrade * (number.value) + commentGrade) / (number.value+1);
+
+          // Ažuriranje fabričke ocene
+          factory.value.grade = newGrade;
+
+                 /* const updatedFactory = {
+                      ...factory.value,  // Kopiramo sve postojeće atribute fabrike
+                      grade: newGrade     // Ažuriramo ocenu fabrike
+                    };
+
+                    axios.put(`http://localhost:8080/WebShopAppREST/rest/factories/${factory.value.id}`, updatedFactory)
+                      .then(response => {
+                        console.log('Factory updated successfully with new grade:', response.data);
+                      })
+                      .catch(error => {
+                        console.error('Error updating factory with new grade:', error);
+                      });*/
+
+            const patchData = { grade: newGrade };
+
+                  axios.patch(`http://localhost:8080/WebShopAppREST/rest/factories/${factory.value.id}`, patchData)
+                      .then(response => {
+                          console.log('Factory grade updated successfully:', response.data);
+                          // Ovde možete dodati logiku za ažuriranje lokalnog stanja ako je potrebno
+                      })
+                      .catch(error => {
+                          console.error('Error updating factory grade:', error);
+                      });
+
+                      
+                  })
+                  .catch(error => {
+                      console.error('Error updating comment', error);
+                  });
+
+        })
+        .catch(error => {
+            console.error('Error accepting comment', error);
+        });
+
+
+      
+}
+
+function denyComment(id) {
+    // Logika za odbijanje komentara
+   // comment.isDenied = true;
+    console.log(id);
+   // comment.isAccepted = true;
+   axios.get(`http://localhost:8080/WebShopAppREST/rest/comments/${id}`)
+        .then(response => {
+            const comment = response.data;
+            
+    
+            console.log('Denied comment:', comment);
+            comment.isChecked = true;
+            comment.isRejected = false;
+
+                      axios.put(`http://localhost:8080/WebShopAppREST/rest/comments/${id}`, comment)
+                  .then(response => {
+                    
+                      console.log('Updated comment:', comment);
+
+
+                      const localComment = comments.value.find(c => c.id === id);
+                    if (localComment) {
+                        localComment.isChecked = true;
+                        localComment.isRejected = false;
+                    }
+                      // Možete dodati dodatnu logiku ili ažurirati stanje vaše Vue komponente nakon uspešnog ažuriranja
+                  })
+                  .catch(error => {
+                      console.error('Error updating comment', error);
+                  });
+
+        })
+        .catch(error => {
+            console.error('Error accepting comment', error);
+        });
+}
+/*
+const fetchNumberOfComments = async() => {
+  const id = route.params.id;
+    axios.get(`http://localhost:8080/WebShopAppREST/rest/comments/number/${id}`)
+        .then(response => {
+            number.value = response.data.length; 
+            console.log('aa',number.value);// Dodelite dužinu niza odgovoru
+        })
+        .catch(error => {
+            console.error('Error fetching number of comments:', error);
+        });
+};*/
+const fetchNumberOfComments = async () => {
+    const id = route.params.id;
+    try {
+        const response = await axios.get(`http://localhost:8080/WebShopAppREST/rest/comments/number/${id}`);
+        number.value = response.data.length;
+        console.log('Number of comments:', number.value);
+    } catch (error) {
+        console.error('Error fetching number of comments:', error);
+    }
+};
+
+onMounted(async() => {
   
   const userId = getUserIdFromLocalStorage();
   console.log(userId);
+  await fetchNumberOfComments();
   
+
   //trenutni korisnik 
  /* axios.get(`http://localhost:8080/WebShopAppREST/rest/users/${userId}`)
     .then(response => {
@@ -151,6 +320,34 @@ userRole.value = getUserRoleFromCookie();
 
 
   const id = route.params.id;
+if(userRole.value == 'CUSTOMER'){
+   axios.get(`http://localhost:8080/WebShopAppREST/rest/comments/count/${id}`)
+        .then(response => {
+            comments.value = response.data;
+            texts.value = comments.value.map(comment => comment.text);
+            console.log('Komentari:', texts.value);
+        })
+        .catch(error => {
+            console.error('Greška pri preuzimanju komentara:', error);
+        });
+}
+if(userRole.value == 'MANAGER' || userRole.value  == 'ADMINISTRATOR'){
+   axios.get(`http://localhost:8080/WebShopAppREST/rest/comments/user/${id}`)
+        .then(response => {
+            comments.value = response.data;
+            texts.value = comments.value.map(comment => comment.text);
+            console.log('Komentari:', texts.value);
+
+            userIds.value = comments.value.map(comment => comment.userId);
+            fetchUserDetails(userIds.value);
+        })
+        .catch(error => {
+            console.error('Greška pri preuzimanju komentara:', error);
+        });
+}
+
+      axios.get(``)
+
   axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/${id}`)
       .then(response => {
           factory.value = response.data;
@@ -168,6 +365,23 @@ userRole.value = getUserRoleFromCookie();
           }
       });
 });
+
+const fetchUserDetails = (userIds) => {
+    userIds.forEach(userId => {
+        axios.get(`http://localhost:8080/WebShopAppREST/rest/users/${userId}`)
+            .then(response => {
+                const user = response.data;
+                const commentToUpdate = comments.value.find(comment => comment.userId === user.id);
+                if (commentToUpdate) {
+                    commentToUpdate.userName = user.firstName;
+                    commentToUpdate.userLastName = user.lastName;
+                }
+            })
+            .catch(error => {
+                console.error(`Error fetching user details for userId ${userId}:`, error);
+            });
+    });
+};
 
 function updateChocolate(chocolate) {
   router.push({ name: 'update', params: { id: chocolate.id } });
@@ -265,14 +479,35 @@ body {
 }
 
 .tables {
-  width: 80%;
+  width: 100%;
   display: flex;
   justify-content: center;
-  margin-left: 10%;
+  margin-left: 1%;
 }
-
 .table-container {
   width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+.table1-container {
+  width: 100%;
+  height: 200px;
+  border-collapse: collapse;
+  margin-top: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+.table2-container {
+  width: 100%;
+  height: auto; /* Automatska visina */
+    max-height: 300px; /* Opciono: maksimalna visina sa skrolom */
+    overflow-y: auto;
   border-collapse: collapse;
   margin-top: 20px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);

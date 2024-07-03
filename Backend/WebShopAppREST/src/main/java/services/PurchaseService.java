@@ -21,6 +21,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import beans.Chocolate;
+import beans.Factory;
 import beans.Purchase;
 import beans.ShoppingCart;
 import beans.User;
@@ -96,6 +97,13 @@ public class PurchaseService {
         }
     }
 */
+	@GET
+    @Path("purchaseId/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Purchase findPurchase(@PathParam("id") String id) {
+		PurchaseDAO dao = (PurchaseDAO) ctx.getAttribute("purchaseDAO");
+		    return dao.findPurchases(id);
+    }
 
 	@GET
 	@Path("/user/{userId}")
