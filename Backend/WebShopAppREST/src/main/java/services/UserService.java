@@ -167,6 +167,7 @@ public class UserService {
 	             idCookie.setPath("/");
 	             response.addCookie(idCookie);
 	             
+	             System.out.println("User logged in: " + user.getUsername() + ", Role: " + user.getRole() + ", ID: " + user.getId());
 	             return Response.ok().entity(user).build();
 	         } else {
 	             return Response.status(Response.Status.UNAUTHORIZED).entity("{\"message\": \"Invalid password\"}").build();
@@ -176,28 +177,28 @@ public class UserService {
 	     }
 	 }
 
+	 @POST
+	 @Path("/logout")
+	 public void logoutUser(@Context HttpServletRequest request, @Context HttpServletResponse response) {
+	     request.getSession().invalidate();
+	     Cookie userCookie = new Cookie("username", null );
+	     userCookie.setMaxAge(0);
+	     userCookie.setPath("/");
+	     response.addCookie(userCookie);
+	     
+	     Cookie roleCookie = new Cookie("userRole", null);
+	     roleCookie.setMaxAge(0);
+	     roleCookie.setPath("/");
+	     response.addCookie(roleCookie);
+	    
+	     Cookie idCookie = new Cookie("id", null);
+	     idCookie.setMaxAge(0);
+	     idCookie.setPath("/");
+	     response.addCookie(idCookie);
+	     
+	     System.out.println("User logged out, session invalidated.");
+	 }
 
-	
-	@POST
-	@Path("/logout")
-	public void logoutUser( @Context HttpServletRequest request, @Context HttpServletResponse response) {
-       	
-	        	request.getSession().invalidate();
-	        	Cookie userCookie = new Cookie("username", null );
-	        	userCookie.setMaxAge(0);
-	        	userCookie.setPath("/");
-	        	response.addCookie(userCookie);
-	        	
-	        	Cookie roleCookie = new Cookie("userRole", null);
-	        	roleCookie.setMaxAge(0);
-	        	roleCookie.setPath("/");
-	        	response.addCookie(roleCookie);
-	       
-	        	Cookie idCookie = new Cookie("id", null);
-	        	idCookie.setMaxAge(0);
-	        	idCookie.setPath("/");
-	        	response.addCookie(idCookie);
-	}
 
 	
 	

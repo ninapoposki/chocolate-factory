@@ -94,7 +94,6 @@ public class FactoryDAO {
             }
             out.flush();
             out.close();
-            System.out.println("All factories saved to file successfully.");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -126,7 +125,6 @@ public class FactoryDAO {
             out.write(factoryToCsv(factory) + "\n");
             out.flush();
             out.close();
-            System.out.println("Factory saved to file successfully: " + factory.getFactoryName());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -170,9 +168,9 @@ public class FactoryDAO {
                 }
                 factory.setEmployees(employees);
                 factory.setChocolates(chocolateDAO.findChocolatesByFactoryId(id).stream().collect(Collectors.toList()));
-
                 factories.put(id, factory);  
                 System.out.println("Factory loaded: " + factory.getFactoryName());
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -232,8 +230,6 @@ public class FactoryDAO {
                             .anyMatch(chocolate -> chocolate.getChocolateName().toLowerCase().contains(search.toLowerCase()));
 
                     boolean matches = matchesFactoryName || matchesLocation || matchesAverageGrade || matchesChocolateName;
-                    System.out.println("Factory: " + factory.getFactoryName() + ", Matches Factory Name: " + matchesFactoryName + ", Matches Location: " + matchesLocation
-                            + ", Matches Average Grade: " + matchesAverageGrade + ", Matches Chocolate Name: " + matchesChocolateName + ", Overall Matches: " + matches);
 
                     return matches;
                 })
@@ -275,10 +271,6 @@ public class FactoryDAO {
                     boolean matchesChocolateKind = (chocolateKind == null || chocolateKind.isEmpty()) || factory.getChocolates().stream()
                             .anyMatch(chocolate -> chocolate.getVariety().equalsIgnoreCase(chocolateKind));
 
-                    System.out.println("Factory: " + factory.getFactoryName() 
-                    + ", Matches Open Only: " + matchesOpenOnly 
-                    + ", Matches Chocolate Type: " + matchesChocolateType 
-                    + ", Matches Chocolate Kind: " + matchesChocolateKind);
                     return matchesOpenOnly && matchesChocolateType && matchesChocolateKind;
                 })
                 .collect(Collectors.toList());
