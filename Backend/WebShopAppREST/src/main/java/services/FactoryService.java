@@ -28,6 +28,7 @@ import dao.CommentDAO;
 import dao.FactoryDAO;
 import dao.LocationDAO;
 import dao.UserDAO;
+import enumerations.ActivityStatus;
 import enumerations.Role;
 
 @Path("/factories")
@@ -85,11 +86,16 @@ public class FactoryService {
     }
 
     @GET
-    @Path("/search")
+    @Path("/searchSortFilter")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response searchFactories(@QueryParam("search") String search) {
+    public Response searchSortFilterFactories(@QueryParam("search") String search, 
+                                              @QueryParam("sortBy") String sortBy, 
+                                              @QueryParam("ascending") Boolean ascending, 
+                                              @QueryParam("chocolateType") String chocolateType, 
+                                              @QueryParam("chocolateVariety") String chocolateVariety, 
+                                              @QueryParam("openOnly") Boolean openOnly) {
         FactoryDAO dao = (FactoryDAO) ctx.getAttribute("factoryDAO");
-        Collection<Factory> factories = dao.searchFactories(search);
+        Collection<Factory> factories = dao.searchSortFilterFactories(search, sortBy, ascending, chocolateType, chocolateVariety, openOnly);
         if (factories.isEmpty()) {
             return Response.status(Response.Status.NO_CONTENT).build();
         }
@@ -97,28 +103,7 @@ public class FactoryService {
     }
 
 
-    @GET
-    @Path("/sort")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response sortFactories(@QueryParam("sortBy") String sortBy, @QueryParam("ascending") boolean ascending) {
-        FactoryDAO dao = (FactoryDAO) ctx.getAttribute("factoryDAO");
-        Collection<Factory> factories = dao.sortFactories(sortBy, ascending);
-        return Response.ok(factories).build();
-    }
 
-    @GET
-    @Path("/filter")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response filterFactories(@QueryParam("chocolateType") String chocolateType, 
-                                    @QueryParam("chocolateVariety") String chocolateVariety, 
-                                    @QueryParam("openOnly") Boolean openOnly) {
-        System.out.println("Filtering with params: chocolateType=" + chocolateType 
-                           + ", chocolateKind=" + chocolateVariety
-                           + ", openOnly=" + openOnly);
-        FactoryDAO dao = (FactoryDAO) ctx.getAttribute("factoryDAO");
-        Collection<Factory> factories = dao.filterFactories(chocolateType, chocolateVariety, openOnly);
-        return Response.ok(factories).build();
-    }
 
     @GET
     @Path("/unassignedManagers")
@@ -150,6 +135,8 @@ public class FactoryService {
         if (manager != null && (manager.getId() == null || manager.getId().isEmpty())) {
             System.out.println("Creating new manager: " + manager.getUsername());
             manager.setRole(Role.MANAGER);
+            manager.setPoints(0.0);
+            manager.setActivity(ActivityStatus.ACTIVE);
             User savedManager = userDao.save(manager);
             if (savedManager == null) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Failed to add manager").build();
@@ -193,8 +180,11 @@ public class FactoryService {
     public Response addEmployeeToFactory(@PathParam("factoryId") String factoryId, User employee) {
         FactoryDAO factoryDao = (FactoryDAO) ctx.getAttribute("factoryDAO");
         UserDAO userDao = (UserDAO) ctx.getAttribute("userDAO");
+        
 
         if (employee.getId() == null || employee.getId().isEmpty()) {
+        	employee.setPoints(0.0);
+        	employee.setActivity(ActivityStatus.ACTIVE);
             User savedEmployee = userDao.save(employee);
             if (savedEmployee == null) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Failed to add employee").build();
@@ -264,4 +254,6 @@ public class FactoryService {
             return Response.status(Response.Status.BAD_REQUEST).entity("Invalid patch data").build();
         }
     }
+    
+  
 }
