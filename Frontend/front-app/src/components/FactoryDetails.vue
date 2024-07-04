@@ -91,7 +91,7 @@
 
                             <!-- ne nzam da li admin sme da update cokolade radi ? proveri-menadzser sme da doda cokoladu da je brise i apdejtuje  -->
                               <button v-if="userRole === 'MANAGER'" @click="updateChocolate(chocolate)">Change chocolate</button>
-                              <button v-if="userRole === 'EMPLOYEE'" @click="changeQuantity(chocolate)">Change Quantity</button>
+                              <button v-if="canChangeQuantity(chocolate)" @click="changeQuantity(chocolate)">Change Quantity</button>
                               <button v-if="userRole === 'MANAGER'" class="small-button" @click="deleteChocolate(chocolate.id)">Delete chocolate</button>
                               <button class="small-button" v-if="userRole === 'CUSTOMER'" @click="showQuantityDialog(chocolate)">Add to Cart</button>
 
@@ -166,6 +166,13 @@ const getUserIdFromLocalStorage = () => {
   }
   return null;
 };
+function canChangeQuantity(chocolate) {
+  const userId = getUserIdFromLocalStorage();
+  const factoryId = factory.value ? String(factory.value.id) : null;
+
+  return userRole.value === 'EMPLOYEE' && String(chocolate.factoryId) === factoryId && factory.value.employees.some(employee => employee.id === userId);
+}
+
 
 
 function acceptComment(id) {
@@ -388,8 +395,39 @@ function updateChocolate(chocolate) {
 }
 
 function changeQuantity(chocolate) {
-  router.push({ name: 'changeQuantity', params: { id: chocolate.id } });
+  const userId = getUserIdFromLocalStorage();
+  console.log("User ID:", userId);  // Ispisuje ID korisnika
+  axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/employeeFactory/${userId}`)
+    .then(response => {
+      const factory = response.data;
+      console.log("Factory data:", factory);  // Ispisuje podatke o fabrici
+      if (!factory) {
+        alert('Factory not found.');
+        return;
+      }
+      // Proveravamo da li je trenutni korisnik zaposlenik u fabrici
+      const isEmployeeInFactory = factory.employees.some(employee => employee.id === userId);
+      console.log("Is employee in factory:", isEmployeeInFactory);  // Ispisuje rezultat provere da li je korisnik zaposlenik u fabrici
+      // Proveravamo da li čokolada pripada fabrici
+      console.log("Chocolate factoryId:", chocolate.factoryId);  // Ispisuje factoryId čokolade
+      console.log("Factory id:", factory.id);  // Ispisuje ID fabrike
+      const isChocolateInFactory = String(chocolate.factoryId) === String(factory.id);
+      console.log("Is chocolate in factory:", isChocolateInFactory);  // Ispisuje rezultat provere da li čokolada pripada fabrici
+
+      if (isEmployeeInFactory && isChocolateInFactory) {
+        router.push({ name: 'changeQuantity', params: { id: chocolate.id } });
+      } else {
+        alert('You can only change quantity for chocolates that belong to your factory.');
+      }
+    })
+    .catch(error => {
+      console.error('Error checking factory chocolate ownership', error);
+      alert('Failed to check chocolate ownership.');
+    });
 }
+
+
+
 
 function deleteChocolate(chocolateId) {
   axios.delete(`http://localhost:8080/WebShopAppREST/rest/chocolates/${chocolateId}`)

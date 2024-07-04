@@ -89,7 +89,7 @@
               registerUser.value.dateOfBirth = null;
               passwordsMatch.value = true;
   
-              alert(`Welcome ${response.data.firstName}! Your account has been successfully created!`);
+              alert(`Welcome! Your account has been successfully created!`);
               router.push('/'); // Navigacija nazad na početnu stranicu ili stranicu sa podacima o menadžeru
             })
             .catch(error => console.log(error));
