@@ -147,7 +147,8 @@ public class PurchaseDAO {
 	            comment.setFactoryId(purchase.getFactoryId());
 	            comment.setUserId(userId);
 	            comment.setRole(Role.MANAGER);
-
+	            comment.setIsChecked(true);
+	            comment.setIsRejected(true);
 	            commentDAO.save(comment);
 	        }
 
