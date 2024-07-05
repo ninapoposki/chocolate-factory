@@ -70,6 +70,7 @@ public class UserDAO {
     }
 
     public User save(User user) {
+    	 loadUsers(contextPath);
         var users1 = findAll();
         int nextId;
         if (users1.isEmpty()) {

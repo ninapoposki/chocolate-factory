@@ -42,11 +42,12 @@ public class ChocolateDAO {
         return chocolates.values();
     }
 
-    public Chocolate findChocolates(String id) {
-        return chocolates.containsKey(id) ? chocolates.get(id) : null;
-    }
 
-    public Chocolate updateChocolate(String id, Chocolate chocolate) {
+	public Chocolate findChocolates(String id) {
+		return chocolates.containsKey(id) ? chocolates.get(id) : null;
+	}
+	
+	public Chocolate updateChocolate(String id, Chocolate chocolate) {
         Chocolate c = chocolates.containsKey(id) ? chocolates.get(id) : null;
         if (c == null) {
             return save(chocolate);
@@ -81,6 +82,10 @@ public class ChocolateDAO {
             e.printStackTrace();
         }
     }
+    
+
+
+    
 
     private String chocolateToCsv(Chocolate chocolate) {
         return chocolate.getId() + "," +

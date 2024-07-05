@@ -51,7 +51,7 @@ public class FactoryDAO {
         return factories.containsKey(factoryId) ? factories.get(factoryId) : null;
     }
 
-    public Factory updateFactory(String id, Factory factory) {
+   /* public Factory updateFactory(String id, Factory factory) {
         Factory f = factories.containsKey(id) ? factories.get(id) : null;
         if (f == null) {
             return save(factory);
@@ -67,6 +67,23 @@ public class FactoryDAO {
                 f.setUser(factory.getUser());
             }
             saveFactories();
+        }
+        return f;
+    }*/
+    public Factory updateFactory(String id, Factory factory) {
+        Factory f = factories.containsKey(id) ? factories.get(id) : null;
+        if (f == null) {
+            return save(factory);
+        } else {
+            f.setFactoryName(factory.getFactoryName());
+            f.setGrade(factory.getGrade());
+            f.setIsStatus(factory.getIsStatus());
+            f.setLocation(factory.getLocation());
+            f.setLogoUri(factory.getLogoUri());
+            f.setWorkingTime(factory.getWorkingTime());
+            f.setChocolates(factory.getChocolates());
+            factories.put(id, f); // Update the factory in the map
+            saveFactories(); // Save all factories to the file
         }
         return f;
     }
@@ -94,6 +111,21 @@ public class FactoryDAO {
         return factory;
     }
 
+   /* private void saveFactories() {
+        try {
+            Path filePath = Paths.get(contextPath + "/factories.csv");
+            BufferedWriter out = new BufferedWriter(new FileWriter(filePath.toString(), false)); 
+            for (Factory factory : factories.values()) {
+                out.write(factoryToCsv(factory) + "\n");
+            }
+            out.flush();
+            out.close();
+            System.out.println("All factories saved to file successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }*/
+    
     private void saveFactories() {
         try {
             Path filePath = Paths.get(contextPath + "/factories.csv");
@@ -128,6 +160,8 @@ public class FactoryDAO {
                userId + "," +
                employeesBuilder.toString();
     }
+
+  
 
 
     private void saveToFile(Factory factory) {
