@@ -81,6 +81,7 @@ function login() {
     console.error(error);
   });
 }
+
 </script>
 
 <style scoped>

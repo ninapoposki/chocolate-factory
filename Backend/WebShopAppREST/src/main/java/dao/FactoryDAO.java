@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import beans.Factory;
 import beans.Location;
@@ -26,6 +27,7 @@ public class FactoryDAO {
     private ChocolateDAO chocolateDAO; 
     private UserDAO userDAO; 
 
+    private boolean isLoaded = false;  // Dodaj ovu liniju
     private String contextPath;
 
     public FactoryDAO() {
@@ -61,7 +63,10 @@ public class FactoryDAO {
             f.setLogoUri(factory.getLogoUri());
             f.setWorkingTime(factory.getWorkingTime());
             f.setChocolates(factory.getChocolates());
-            saveFactories(); 
+            if (factory.getUser() != null) {
+                f.setUser(factory.getUser());
+            }
+            saveFactories();
         }
         return f;
     }*/
@@ -82,6 +87,9 @@ public class FactoryDAO {
         }
         return f;
     }
+
+   
+
 
     public Factory save(Factory factory) {
         if (factory.getLocation() != null && factory.getLocation().getId() == null) {
@@ -127,7 +135,6 @@ public class FactoryDAO {
             }
             out.flush();
             out.close();
-            System.out.println("All factories saved to file successfully.");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -140,34 +147,41 @@ public class FactoryDAO {
                 employeesBuilder.append(employee.getId()).append(";");
             }
         }
+
+        String userId = (factory.getUser() != null) ? factory.getUser().getId() : "null";
+
         return factory.getId() + "," +
                factory.getFactoryName() + "," +
                factory.getWorkingTime() + "," +
                factory.getIsStatus() + "," +
                factory.getLogoUri() + "," +
                factory.getGrade() + "," +
-               (factory.getLocation() != null ? factory.getLocation().getId() : "") + "," +
-               (factory.getUser() != null ? factory.getUser().getId() : "") + "," +
-              // factory.getLocation().getId() + "," +
-             //  factory.getUser().getId() + "," +
+               factory.getLocation().getId() + "," +
+               userId + "," +
                employeesBuilder.toString();
     }
 
-    private void saveToFile(Factory factory) {
-        try {
-            Path filePath = Paths.get(contextPath + "/factories.csv");
-            BufferedWriter out = new BufferedWriter(new FileWriter(filePath.toString(), true)); 
+  
 
-            out.write(factoryToCsv(factory) + "\n");
-            out.flush();
-            out.close();
-            System.out.println("Factory saved to file successfully: " + factory.getFactoryName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+
+    private void saveToFile(Factory factory) {
+//        try {
+//            Path filePath = Paths.get(contextPath + "/factories.csv");
+//            BufferedWriter out = new BufferedWriter(new FileWriter(filePath.toString(), true)); 
+//
+//            out.write(factoryToCsv(factory) + "\n");
+//            out.flush();
+//            out.close();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+        saveFactories();
+
     }
 
     public void loadFactories(String contextPath) {
+        if (isLoaded) return;  // Ako su podaci već učitani, ne učitavaj ih ponovo
+
         BufferedReader in = null;
         try {
             File file = new File(contextPath + "/factories.csv");
@@ -205,9 +219,9 @@ public class FactoryDAO {
                 }
                 factory.setEmployees(employees);
                 factory.setChocolates(chocolateDAO.findChocolatesByFactoryId(id).stream().collect(Collectors.toList()));
-
                 factories.put(id, factory);  
-                System.out.println("Factory loaded: " + factory.getFactoryName());
+                System.out.println("Factory loaded: " + factory.getFactoryName() + ", Chocolates: " + factory.getChocolates().size());
+
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -221,6 +235,9 @@ public class FactoryDAO {
             }
         }
     }
+    public boolean isLoaded() {
+        return isLoaded;
+    }
 
     public Factory addEmployeeToFactory(String factoryId, User employee) {
         Factory factory = factories.get(factoryId);
@@ -230,7 +247,6 @@ public class FactoryDAO {
                 employees = new ArrayList<>();
             }
             employee.setRole(Role.EMPLOYEE);
-
             employee.setActivity(ActivityStatus.ACTIVE);
             employees.add(employee);
             factory.setEmployees(employees);
@@ -240,6 +256,7 @@ public class FactoryDAO {
         }
         return null;
     }
+    
 
     public Collection<Factory> findAllAndSort() {
         return factories.values().stream()
@@ -248,78 +265,82 @@ public class FactoryDAO {
                 .collect(Collectors.toList());
     }
 
-    public Collection<Factory> searchFactories(String search) {
+    public Collection<Factory> searchSortFilterFactories(String search, String sortBy, Boolean ascending, String chocolateType, String chocolateVariety, Boolean openOnly) {
         double averageGrade = 0;
         boolean isAverageGrade = false;
-        try {
-            averageGrade = Double.parseDouble(search);
-            isAverageGrade = true;
-        } catch (NumberFormatException e) {
+
+        // Ako je search prisutan, pokušaj da ga parsiraš kao broj
+        if (search != null && !search.isEmpty()) {
+            try {
+                averageGrade = Double.parseDouble(search);
+                isAverageGrade = true;
+            } catch (NumberFormatException e) {
+                // search nije broj
+            }
         }
 
         final double finalAverageGrade = averageGrade;
         final boolean finalIsAverageGrade = isAverageGrade;
-        return factories.values().stream()
-                .filter(factory -> {
-                    boolean matchesFactoryName = search != null && !search.isEmpty() && factory.getFactoryName().toLowerCase().contains(search.toLowerCase());
-                    boolean matchesLocation = search != null && !search.isEmpty() && (factory.getLocation().getCity().toLowerCase().contains(search.toLowerCase()) || factory.getLocation().getCountry().toLowerCase().contains(search.toLowerCase()));
-                    boolean matchesAverageGrade = finalIsAverageGrade && factory.getGrade() >= finalAverageGrade;
+        String lowerCaseSearch = (search != null) ? search.toLowerCase() : "";
 
-                    boolean matchesChocolateName = search != null && !search.isEmpty() && factory.getChocolates().stream()
-                            .anyMatch(chocolate -> chocolate.getChocolateName().toLowerCase().contains(search.toLowerCase()));
+        // Default comparator (ako sortBy nije zadan)
+        Comparator<Factory> comparator = Comparator.comparing(Factory::getId);
 
-                    boolean matches = matchesFactoryName || matchesLocation || matchesAverageGrade || matchesChocolateName;
-                    System.out.println("Factory: " + factory.getFactoryName() + ", Matches Factory Name: " + matchesFactoryName + ", Matches Location: " + matchesLocation
-                            + ", Matches Average Grade: " + matchesAverageGrade + ", Matches Chocolate Name: " + matchesChocolateName + ", Overall Matches: " + matches);
-
-                    return matches;
-                })
-                .collect(Collectors.toList());
-    }
-
-    public Collection<Factory> sortFactories(String sortBy, boolean ascending) {
-        Comparator<Factory> comparator;
-
-        switch (sortBy.toLowerCase()) {
-            case "factoryname":
-                comparator = Comparator.comparing(Factory::getFactoryName);
-                break;
-            case "location":
-                comparator = Comparator.comparing(factory -> factory.getLocation().getCity());
-                break;
-            case "averagegrade":
-                comparator = Comparator.comparing(Factory::getGrade);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid sort parameter: " + sortBy);
+        if (sortBy != null && !sortBy.isEmpty()) {
+            switch (sortBy.toLowerCase()) {
+                case "factoryname":
+                    comparator = Comparator.comparing(Factory::getFactoryName);
+                    break;
+                case "location":
+                    comparator = Comparator.comparing(factory -> factory.getLocation().getCity());
+                    break;
+                case "averagegrade":
+                    comparator = Comparator.comparing(Factory::getGrade);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid sort parameter: " + sortBy);
+            }
+            if (ascending != null && !ascending) {
+                comparator = comparator.reversed();
+            }
         }
 
-        if (!ascending) {
-            comparator = comparator.reversed();
+        // Kombinovano pretraga, filtriranje i sortiranje
+        Stream<Factory> factoryStream = factories.values().stream();
+
+        // Ako postoji search parametar, primenjujemo pretragu
+        if (!lowerCaseSearch.isEmpty() || finalIsAverageGrade) {
+            factoryStream = factoryStream.filter(factory -> {
+                boolean matchesFactoryName = !lowerCaseSearch.isEmpty() && factory.getFactoryName().toLowerCase().contains(lowerCaseSearch);
+                boolean matchesLocation = !lowerCaseSearch.isEmpty() && (factory.getLocation().getCity().toLowerCase().contains(lowerCaseSearch) || factory.getLocation().getCountry().toLowerCase().contains(lowerCaseSearch));
+                boolean matchesAverageGrade = finalIsAverageGrade && factory.getGrade() >= finalAverageGrade;
+                boolean matchesChocolateName = !lowerCaseSearch.isEmpty() && factory.getChocolates().stream()
+                    .anyMatch(chocolate -> chocolate.getChocolateName().toLowerCase().contains(lowerCaseSearch));
+
+                return matchesFactoryName || matchesLocation || matchesAverageGrade || matchesChocolateName;
+            });
         }
 
-        return factories.values().stream()
-                .sorted(comparator)
-                .collect(Collectors.toList());
+        // Ako postoje filteri, primenjujemo filtriranje
+        factoryStream = factoryStream.filter(factory -> {
+            boolean matchesOpenOnly = (openOnly == null || !openOnly) || factory.getIsStatus();
+            boolean matchesChocolateType = (chocolateType == null || chocolateType.isEmpty()) || factory.getChocolates().stream()
+                .anyMatch(chocolate -> chocolate.getType().equalsIgnoreCase(chocolateType));
+            boolean matchesChocolateVariety = (chocolateVariety == null || chocolateVariety.isEmpty()) || factory.getChocolates().stream()
+                .anyMatch(chocolate -> chocolate.getVariety().equalsIgnoreCase(chocolateVariety));
+
+            return matchesOpenOnly && matchesChocolateType && matchesChocolateVariety;
+        });
+
+        // Ako postoji sortBy parametar, primenjujemo sortiranje
+        if (sortBy != null && !sortBy.isEmpty()) {
+            factoryStream = factoryStream.sorted(comparator);
+        }
+
+        return factoryStream.collect(Collectors.toList());
     }
 
-    public Collection<Factory> filterFactories(String chocolateType, String chocolateKind, Boolean openOnly) {
-        return factories.values().stream()
-                .filter(factory -> {
-                    boolean matchesOpenOnly = (openOnly == null || !openOnly) || factory.getIsStatus();
-                    boolean matchesChocolateType = (chocolateType == null || chocolateType.isEmpty()) || factory.getChocolates().stream()
-                            .anyMatch(chocolate -> chocolate.getType().equalsIgnoreCase(chocolateType));
-                    boolean matchesChocolateKind = (chocolateKind == null || chocolateKind.isEmpty()) || factory.getChocolates().stream()
-                            .anyMatch(chocolate -> chocolate.getVariety().equalsIgnoreCase(chocolateKind));
 
-                    System.out.println("Factory: " + factory.getFactoryName() 
-                    + ", Matches Open Only: " + matchesOpenOnly 
-                    + ", Matches Chocolate Type: " + matchesChocolateType 
-                    + ", Matches Chocolate Kind: " + matchesChocolateKind);
-                    return matchesOpenOnly && matchesChocolateType && matchesChocolateKind;
-                })
-                .collect(Collectors.toList());
-    }
 
     public LocationDAO getLocationDAO() {
         return locationDAO;

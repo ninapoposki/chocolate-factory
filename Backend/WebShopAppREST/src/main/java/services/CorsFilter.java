@@ -26,7 +26,7 @@ public class CorsFilter implements ContainerRequestFilter, ContainerResponseFilt
         return request.getHeaderString("Origin") != null
                 && request.getMethod().equalsIgnoreCase("OPTIONS");
     }
-    
+
     @Override
     public void filter(ContainerRequestContext request, ContainerResponseContext response)
             throws IOException {

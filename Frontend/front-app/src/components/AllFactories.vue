@@ -5,7 +5,7 @@
       <div class="search-bar">
         <input type="text" v-model="searchQuery" placeholder="Search factories..." />
         <div class="search-buttons">
-          <button @click="searchFactories">Search</button>
+          <button @click="searchSortFilterFactories">Search</button>
           <button class="reset-button" @click="resetFactories">Reset</button>
         </div>
       </div>
@@ -22,7 +22,6 @@
             <option :value="true">Ascending</option>
             <option :value="false">Descending</option>
           </select>
-          <button @click="sortFactories">Sort</button>
         </div>
         <div class="filter-bar">
           <label for="chocolateType">Chocolate Type:</label>
@@ -37,7 +36,6 @@
           </select>
           <label for="openOnly">Open Only:</label>
           <input type="checkbox" v-model="openOnly" id="openOnly">
-          <button @click="filterFactories">Filter</button>
         </div>
       </div>
       <div v-if="userRole === 'ADMINISTRATOR'" class="add-button">
@@ -71,7 +69,7 @@
               <td>{{ factory.grade }}</td>
               <td class="buttons">
                 <button @click="ShowDetails(factory.id)">Show details</button>
-                <button  v-if="userRole === 'MANAGER'" class="small-button" @click="AddNewChocolate(factory.id)">Add chocolate</button>
+                <button v-if="userRole === 'MANAGER'" class="small-button" @click="AddNewChocolate(factory.id)">Add chocolate</button>
               </td>
             </tr>
           </tbody>
@@ -154,53 +152,33 @@ export default {
     },
     getUserIdFromLocalStorage() {
       const cookies = document.cookie.split(';').map(cookie => cookie.trim());
-  const idCookie = cookies.find(cookie => cookie.startsWith('id='));
-  if (idCookie) {
-    return idCookie.split('=')[1];
-  }
-  return null;
+      const idCookie = cookies.find(cookie => cookie.startsWith('id='));
+      if (idCookie) {
+        return idCookie.split('=')[1];
+      }
+      return null;
     },
-    searchFactories() {
-      axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/search?search=${this.searchQuery}`)
-        .then(response => {
-          if (response.data.length > 0) {
-            this.factories = response.data;
-          } else {
-            this.factories = [];
-          }
-        })
-        .catch(error => {
-          console.error('Error searching factories', error);
-        });
-    },
-    sortFactories() {
-      axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/sort?sortBy=${this.sortBy}&ascending=${this.ascending}`)
-        .then(response => {
-          this.factories = response.data;
-        })
-        .catch(error => {
-          console.error('Error sorting factories', error);
-        });
-    },
-    filterFactories() {
-      console.log("Filtering with params:", {
-    chocolateType: this.chocolateType,
-    chocolateKind: this.chocolateKind,
-    openOnly: this.openOnly
-  });
-
-      axios.get(`http://localhost:8080/WebShopAppREST/rest/factories/filter`, {
+    searchSortFilterFactories() {
+      axios.get('http://localhost:8080/WebShopAppREST/rest/factories/searchSortFilter', {
         params: {
+          search: this.searchQuery,
+          sortBy: this.sortBy,
+          ascending: this.ascending,
           chocolateType: this.chocolateType,
-          chocolateVariety: this.chocolateKind, 
+          chocolateVariety: this.chocolateKind,
           openOnly: this.openOnly
-        }
+        },
+        // withCredentials: true
       })
       .then(response => {
-        this.factories = response.data;
+        if (response.data.length > 0) {
+          this.factories = response.data;
+        } else {
+          this.factories = [];
+        }
       })
       .catch(error => {
-        console.error('Error filtering factories', error);
+        console.error('Error searching, sorting, and filtering factories', error);
       });
     },
     resetFactories() {
@@ -210,7 +188,7 @@ export default {
       this.searchQuery = '';
       this.chocolateType = '';
       this.chocolateKind = '';
-      this.openOnly = '';
+      this.openOnly = false;
     },
     ShowDetails(id) {
       this.$router.push(`/details/${id}`);
@@ -224,6 +202,7 @@ export default {
   }
 };
 </script>
+
 
 <style scoped>
 .search-bar {
