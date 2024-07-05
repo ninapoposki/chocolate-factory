@@ -237,13 +237,15 @@
             </div>
           </td>
           <td v-else>N/A</td>
-          <td>{{ purchase.chocolates.length }}</td>
+          <td> <div v-for="(quantity, index) in purchase.chocolateQuantities" :key="index">
+    {{ quantity }}<br>
+  </div></td>
           <td>{{ formatDate(purchase.dateAndTime) }}</td>
           <td>{{ purchase.price.toFixed(2) }}din</td>
           <td>{{ purchase.status }}</td>
           <td>{{ purchase.customerFirstName }}  {{ purchase.customerLastName }}</td>
           <td>
-            <button @click="toggleChangeRequest(purchase)">Change Request</button>
+            <button v-if="purchase.status === 'PROCESSING'" @click="toggleChangeRequest(purchase)">Change Request</button>
             <div v-if="purchase.showChangeRequest">
               <select v-model="purchase.newStatus">
                 <option value="ACCEPTED">Accept</option>
@@ -730,6 +732,31 @@ const fetchEmployeeFactory = (userId) => {
     });
 };
 
+
+const fetchFactoryPurchases = (factoryId) => {
+  axios.get(`http://localhost:8080/WebShopAppREST/rest/purchases/factory/${factoryId}`)
+    .then(async (response) => {
+      const purchaseData = response.data;
+      const updatedPurchases = await Promise.all(purchaseData.map(async (purchase) => {
+        const names = await getChocolateNamesFromCartIds(purchase.chocolates);
+        const quantities = await getChocolateQuantitiesFromCartIds(purchase.chocolates); // Poziv funkcije za količine
+        return { 
+          ...purchase, 
+          chocolateNames: names, 
+          chocolateQuantities: quantities // Dodavanje količina u kupovinu
+        };
+      }));
+      factoryPurchases.value = updatedPurchases;
+      console.log('Updated factory purchases:', updatedPurchases); // Dodato logovanje
+    })
+    .catch(error => {
+      console.error('Error fetching factory purchases:', error);
+    });
+};
+
+
+/*
+
 const fetchFactoryPurchases = (factoryId) => {
   axios.get(`http://localhost:8080/WebShopAppREST/rest/purchases/factory/${factoryId}`)
     .then(async (response) => {
@@ -745,7 +772,7 @@ const fetchFactoryPurchases = (factoryId) => {
       console.error('Error fetching factory purchases:', error);
     });
 };
-
+*/
 const userImage = 'https://t4.ftcdn.net/jpg/05/50/60/55/360_F_550605549_PaTP81pjaCsrNTnfUaYlUZ8wmPpQSHY8.jpg';
 
 const maskedPassword = computed(() => {
@@ -886,6 +913,11 @@ const submitChangeRequest = (purchase) => {
     status: purchase.newStatus,
   };
 
+  if(purchase.newStatus === 'ACCEPTED'){
+      
+      fetchAndUpdateChocolates(purchase.chocolates);
+  }
+
   if (purchase.newStatus === 'DECLINED') {
     requestData.commentText = purchase.commentText;
     requestData.userId = getUserIdFromLocalStorage();
@@ -932,6 +964,46 @@ const cancelOrder = async (purchaseId) => {
     console.error('Error cancelling order:', error);
   }
 };
+
+async function fetchAndUpdateChocolates(cartIds) {
+  for (const cartId of cartIds) {
+    console.log('dajana lista idjeva ', cartIds.value)
+    try {
+      const cartResponse = await axios.get(`http://localhost:8080/WebShopAppREST/rest/shoppingCarts/${cartId}`);
+      const cartData = cartResponse.data;
+
+      for (const [chocolateId, quantity] of Object.entries(cartData.chocolates)) {
+        try {
+          const chocolateResponse = await axios.get(`http://localhost:8080/WebShopAppREST/rest/chocolates/choco/${chocolateId}`);
+          const chocolateData = chocolateResponse.data;
+          const newQuantity = chocolateData.numberOfChocolates - quantity;
+         console.log('new iaOnStock', newQuantity);
+         let newIsOnStock = true;
+          if (newQuantity === 0) {
+            newIsOnStock = false;
+          }
+          // Create a new chocolate object with quantity
+          const chocolateWithQuantity = {
+            ...chocolateData,
+             isOnStock: newIsOnStock,
+            numberOfChocolates: newQuantity
+          };
+
+          // Send a PUT request to update the chocolate
+          await axios.put(`http://localhost:8080/WebShopAppREST/rest/chocolates/${chocolateId}`, chocolateWithQuantity);
+        } catch (error) {
+          console.error(`Error fetching or updating chocolate with ID: ${chocolateId}`, error);
+        }
+      }
+    } catch (error) {
+      console.error(`Error fetching shopping cart with ID: ${cartId}`, error);
+    }
+  }
+}
+
+
+
+
 
 async function fetchUserForUpdate(userId) {
   try {

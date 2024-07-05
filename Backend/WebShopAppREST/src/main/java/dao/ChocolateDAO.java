@@ -74,6 +74,7 @@ public class ChocolateDAO {
 	        c.setVariety(chocolate.getVariety());
 	        c.setWeight(chocolate.getWeight());
 	        c.setFactoryId(chocolate.getFactoryId());
+	        c.setIsOnStock(chocolate.getIsOnStock());
 	        var factory=factoryDAO.findFactory(String.valueOf(chocolate.getFactoryId()));
 	        c.setFactory(factory);
 	        saveChocolates(); // Ova metoda treba da ažurira sve promene u CSV fajlu

@@ -76,6 +76,7 @@ public class UserService {
         user.setDateOfBirth(dto.getDateOfBirth());
         user.setRole(Role.CUSTOMER);
         user.setPoints(0);
+        user.setActivity(ActivityStatus.ACTIVE);
         
         User savedUser = dao.save(user);
         
@@ -273,6 +274,7 @@ public class UserService {
         user.setDateOfBirth(dto.getDateOfBirth());
         user.setRole(Role.MANAGER);
         user.setPoints(0);
+        user.setActivity(ActivityStatus.ACTIVE);
         
         User savedUser = dao.save(user);
         
